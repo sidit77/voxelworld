@@ -1,0 +1,32 @@
+group 'com.github.sidit77'
+version '0.0.1'
+
+apply plugin: 'java'
+apply plugin: 'application'
+
+sourceCompatibility = 1.8
+mainClassName = "com.github.sidit77.voxelworld.Main"
+
+repositories {
+    mavenCentral()
+    maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
+}
+
+jar {
+    manifest {
+        attributes 'Implementation-Title': 'Voxel World',
+                   'Implementation-Version': version
+    }
+}
+
+dependencies {
+    compile group: 'org.joml', name: 'joml', version: '1.6.7'
+    compile group: 'org.lwjgl', name: 'lwjgl', version: '3.0.0b'
+    compile group: 'org.lwjgl', name: 'lwjgl-platform', version: '3.0.0b', classifier: 'natives-windows'
+    compile group: 'org.lwjgl', name: 'lwjgl-platform', version: '3.0.0b', classifier: 'natives-linux'
+    compile group: 'org.lwjgl', name: 'lwjgl-platform', version: '3.0.0b', classifier: 'natives-osx'
+}
+
+task listJars << {
+    configurations.compile.each { File file -> println file.name }
+}
