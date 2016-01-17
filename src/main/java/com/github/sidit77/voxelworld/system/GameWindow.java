@@ -1,5 +1,7 @@
 package com.github.sidit77.voxelworld.system;
 
+import com.github.sidit77.voxelworld.system.input.Keyboard;
+import com.github.sidit77.voxelworld.system.input.Mouse;
 import org.lwjgl.glfw.*;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GL11;
@@ -34,6 +36,9 @@ public abstract class GameWindow {
     private int y;
     private boolean resized;
     private String title;
+    private Keyboard keyboard;
+    private Mouse mouse;
+    //TODO add Gamepad input
 
     public GameWindow(){
         this("Game Window");
@@ -81,6 +86,9 @@ public abstract class GameWindow {
                 (vidmode.height() - height) / 2
         );
 
+        keyboard = new Keyboard(windowid);
+        mouse = new Mouse(windowid);
+
     }
 
     public void run(){
@@ -101,6 +109,7 @@ public abstract class GameWindow {
             }
 
             update(time);
+            mouse.update();
             render();
 
             GLFW.glfwSwapBuffers(windowid);
@@ -110,6 +119,9 @@ public abstract class GameWindow {
 
         sizeCallback.release();
         posCallback.release();
+
+        keyboard.destroy();
+        mouse.destroy();
 
         GLFW.glfwDestroyWindow(windowid);
 
@@ -121,7 +133,7 @@ public abstract class GameWindow {
     }
 
     public void exit(){
-        GLFW.glfwWindowShouldClose(windowid);
+        GLFW.glfwSetWindowShouldClose(windowid, GLFW.GLFW_TRUE);
     }
 
     public int getWidth() {
@@ -175,6 +187,14 @@ public abstract class GameWindow {
 
     public void setPosition(int x, int y){
         GLFW.glfwSetWindowPos(windowid,x,y);
+    }
+
+    public Keyboard getKeyboard() {
+        return keyboard;
+    }
+
+    public Mouse getMouse() {
+        return mouse;
     }
 
     public abstract void load();
