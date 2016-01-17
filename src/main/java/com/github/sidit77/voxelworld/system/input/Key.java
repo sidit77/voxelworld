@@ -144,7 +144,9 @@ public enum Key {
     public int getKeyCode(){
         return id;
     }
-    public String getName(){
-        return GLFW.glfwGetKeyName(id,0);
+    @Override
+    public String toString(){
+        String name = GLFW.glfwGetKeyName(id,0);
+        return name != null ? name : super.toString();
     }
 }
