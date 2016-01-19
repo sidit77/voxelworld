@@ -6,15 +6,15 @@ import com.github.sidit77.voxelworld.system.GameWindow;
 import com.github.sidit77.voxelworld.system.input.Action;
 import com.github.sidit77.voxelworld.system.input.Key;
 import com.github.sidit77.voxelworld.system.input.MouseButton;
-import com.github.sidit77.voxelworld.world.MarchingCubes;
 import com.github.sidit77.voxelworld.world.Mesh;
+import com.github.sidit77.voxelworld.world.dualcontouring.Octree;
 import org.joml.Vector3f;
 import org.lwjgl.opengl.*;
 
 public class VoxelGameWindow extends GameWindow{
 
     public VoxelGameWindow() {
-        super("Voxel Game", 1280, 720);
+        super("Voxel Game", 1280, 720, false);
     }
 
     private int vaoId;
@@ -101,8 +101,10 @@ public class VoxelGameWindow extends GameWindow{
     }
 
     private void updateWorld(){
-        Mesh mc = MarchingCubes.createMesh(new Vector3f(camera.getPosition()).sub(64, 64, 64), 128, 2);
+        Mesh mc = Octree.createOctree(new Vector3f(0), 128).simplify(0.05f).getMesh();//MarchingCubes.createMesh(new Vector3f(camera.getPosition()).sub(64, 64, 64), 128, 1);//
         Mesh.MeshData mcd = mc.getData();
+
+
 
         indexCount = mcd.indices.capacity();
         GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, vboId);

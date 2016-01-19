@@ -1,5 +1,6 @@
 package com.github.sidit77.voxelworld.world;
 
+import com.github.sidit77.voxelworld.SimplexNoise;
 import org.joml.Vector3f;
 
 public class Sampler {
@@ -7,23 +8,23 @@ public class Sampler {
     //private static final HashMap<Vector3f, Float> cache = new HashMap<>();
 
     public static float sample(Vector3f pos){
-        return -(pos.length() - 20);
+        //return -(pos.length() - 20);
 
-//        float result;
-//
-//        result = (float)SimplexNoise.noise(pos.x/100, pos.z/100) / 1.5f;
-//
-//        pos.add(new Vector3f((float)SimplexNoise.noise(pos.x/20, pos.y/20, pos.z/20)*8));
-//
-//        pos.add(0,-50,0);
-//        pos.div(100);
-//        pos.div(1, 0.5f, 1);
-//
-//        result -= -pos.y;
-//        result += (float)SimplexNoise.noise(pos.x*2+5,pos.y*2+3,pos.z*2+0.6) * 0.20f;
-//        result *= -1;
-//
-//        return result;
+        float result;
+
+        result = (float) SimplexNoise.noise(pos.x/100, pos.z/100) / 1.5f;
+
+        pos.add(new Vector3f((float)SimplexNoise.noise(pos.x/20, pos.y/20, pos.z/20)*8));
+
+        pos.add(0,-50,0);
+        pos.div(100);
+        pos.div(1, 0.5f, 1);
+
+        result -= -pos.y;
+        result += (float)SimplexNoise.noise(pos.x*2+5,pos.y*2+3,pos.z*2+0.6) * 0.20f;
+        result *= -1;
+
+        return result;
 
         //return -pos.y;
 

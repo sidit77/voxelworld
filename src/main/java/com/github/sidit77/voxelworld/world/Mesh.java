@@ -30,17 +30,13 @@ public class Mesh {
             triangles.add(new Triangle(vertexBuffer.get(v[0]), vertexBuffer.get(v[1]), vertexBuffer.get(v[2])).register());
         }
 
-        System.out.println(triangles.size());
-
         vertices.forEach((v)->{
             if(v.isRemoveable()){
-                v.delete();
+                //v.delete(); Disable simplification because broken
             }
         });
 
         clean();
-
-        System.out.println(triangles.size());
     }
 
     public Mesh(Vector3f[][] tris){

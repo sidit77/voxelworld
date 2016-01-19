@@ -49,10 +49,14 @@ public abstract class GameWindow {
     }
 
     public GameWindow(String title, int width, int height){
-        this(title, width, height, 4, 3);
+        this(title, width, height, false);
     }
 
-    public GameWindow(String title, int width, int height, int major, int minor){
+    public GameWindow(String title, int width, int height, boolean fullscreen){
+        this(title, width, height, fullscreen, 4, 3);
+    }
+
+    public GameWindow(String title, int width, int height, boolean fullscreen, int major, int minor){
         this.width = width;
         this.height = height;
         this.resized = false;
@@ -73,19 +77,20 @@ public abstract class GameWindow {
         GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_FORWARD_COMPAT, GL11.GL_TRUE);
         GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_PROFILE, GLFW.GLFW_OPENGL_CORE_PROFILE);
 
-        windowid = GLFW.glfwCreateWindow(width, height, title, MemoryUtil.NULL, MemoryUtil.NULL);
+        windowid = GLFW.glfwCreateWindow(width, height, title, fullscreen ? GLFW.glfwGetPrimaryMonitor() : MemoryUtil.NULL, MemoryUtil.NULL);
         GLFW.glfwSetFramebufferSizeCallback(windowid, sizeCallback);
         GLFW.glfwSetWindowPosCallback(windowid, posCallback);
         if (windowid == MemoryUtil.NULL)
             throw new RuntimeException("Failed to create the GLFW window");
 
-        GLFWVidMode vidmode = GLFW.glfwGetVideoMode(GLFW.glfwGetPrimaryMonitor());
-        GLFW.glfwSetWindowPos(
-                windowid,
-                (vidmode.width() - width) / 2,
-                (vidmode.height() - height) / 2
-        );
-
+        if(!fullscreen) {
+            GLFWVidMode vidmode = GLFW.glfwGetVideoMode(GLFW.glfwGetPrimaryMonitor());
+            GLFW.glfwSetWindowPos(
+                    windowid,
+                    (vidmode.width() - width) / 2,
+                    (vidmode.height() - height) / 2
+            );
+        }
         keyboard = new Keyboard(windowid);
         mouse = new Mouse(windowid);
 
