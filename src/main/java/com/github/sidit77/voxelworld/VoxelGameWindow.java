@@ -2,6 +2,7 @@ package com.github.sidit77.voxelworld;
 
 import com.github.sidit77.voxelworld.opengl.shader.GLSLProgram;
 import com.github.sidit77.voxelworld.opengl.shader.GLSLShader;
+import com.github.sidit77.voxelworld.opengl.texture.Texture2D;
 import com.github.sidit77.voxelworld.system.GameWindow;
 import com.github.sidit77.voxelworld.system.input.Action;
 import com.github.sidit77.voxelworld.system.input.Key;
@@ -25,6 +26,7 @@ public class VoxelGameWindow extends GameWindow{
 
     private GLSLProgram shader;
     private GLSLProgram hudshader;
+    private Texture2D texture;
     private Camera camera;
     private boolean fog = false;
 
@@ -79,6 +81,8 @@ public class VoxelGameWindow extends GameWindow{
                 .attachShaderAndDelete(GLSLShader.fromFile("assets/shader/HUDVertex.glsl", GL20.GL_VERTEX_SHADER))
                 .attachShaderAndDelete(GLSLShader.fromFile("assets/shader/HUDFragment.glsl", GL20.GL_FRAGMENT_SHADER))
                 .link();
+
+        texture = Texture2D.fromFile("assets/texture/grass.png");
 
         camera = new Camera(75, (float)getWidth()/(float)getHeight());
         //camera.setPosition(60, 80, 60);
@@ -156,6 +160,7 @@ public class VoxelGameWindow extends GameWindow{
         GL30.glDeleteVertexArrays(vaoId);
         shader.delete();
         hudshader.delete();
+        texture.delete();
     }
 
     @Override
