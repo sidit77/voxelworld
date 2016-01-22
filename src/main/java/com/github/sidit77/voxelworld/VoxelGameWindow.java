@@ -1,7 +1,9 @@
 package com.github.sidit77.voxelworld;
 
+import com.github.sidit77.voxelworld.opengl.framebuffer.FrameBuffer;
 import com.github.sidit77.voxelworld.opengl.shader.GLSLProgram;
 import com.github.sidit77.voxelworld.opengl.shader.GLSLShader;
+import com.github.sidit77.voxelworld.opengl.texture.EmptyTexture2D;
 import com.github.sidit77.voxelworld.opengl.texture.Texture2D;
 import com.github.sidit77.voxelworld.system.GameWindow;
 import com.github.sidit77.voxelworld.system.input.Action;
@@ -26,9 +28,15 @@ public class VoxelGameWindow extends GameWindow{
 
     private GLSLProgram shader;
     private GLSLProgram hudshader;
+    private GLSLProgram ppshader;
     private Texture2D texture;
     private Camera camera;
     private boolean fog = false;
+
+    EmptyTexture2D renderTexture;
+    EmptyTexture2D depthTexture;
+    //RenderBuffer renderBuffer;
+    FrameBuffer framebuffer;
 
     @Override
     public void load() {
@@ -46,8 +54,12 @@ public class VoxelGameWindow extends GameWindow{
         });
 
         getKeyboard().addKeyEvent((Key key, Action action) -> {
-            if(key == Key.Escape && action == Action.Press && !getMouse().isCursorEnabled()){
-                getMouse().setCursor(true);
+            if(key == Key.Escape && action == Action.Press){
+                if(!getMouse().isCursorEnabled()){
+                    getMouse().setCursor(true);
+                }else{
+                    exit();
+                }
             }
             if(key == Key.F10 && action == Action.Press){
                 if(GL11.glIsEnabled(GL11.GL_CULL_FACE)){
@@ -82,7 +94,19 @@ public class VoxelGameWindow extends GameWindow{
                 .attachShaderAndDelete(GLSLShader.fromFile("assets/shader/HUDFragment.glsl", GL20.GL_FRAGMENT_SHADER))
                 .link();
 
+        ppshader = new GLSLProgram()
+                .attachShaderAndDelete(GLSLShader.fromFile("assets/shader/FullscreenVertex.glsl", GL20.GL_VERTEX_SHADER))
+                .attachShaderAndDelete(GLSLShader.fromFile("assets/shader/FullscreenFragment.glsl", GL20.GL_FRAGMENT_SHADER))
+                .link();
+
         texture = Texture2D.fromFile("assets/texture/grass.png");
+
+        renderTexture = new EmptyTexture2D(getWidth(), getHeight());
+        //renderBuffer = new RenderBuffer(getWidth(), getHeight(), GL30.GL_DEPTH_COMPONENT32F);
+        depthTexture = new EmptyTexture2D(getWidth(), getHeight(), GL11.GL_DEPTH_COMPONENT);//GL30.GL_DEPTH_COMPONENT32F
+        framebuffer = new FrameBuffer().attachTexture(renderTexture, GL30.GL_COLOR_ATTACHMENT0).attachTexture(depthTexture, GL30.GL_DEPTH_ATTACHMENT);//.attachRenderBuffer(renderBuffer, GL30.GL_DEPTH_ATTACHMENT);//
+        if(!framebuffer.isOK())System.out.println("ERROR");
+        framebuffer.unbind();
 
         camera = new Camera(75, (float)getWidth()/(float)getHeight());
         //camera.setPosition(60, 80, 60);
@@ -105,7 +129,7 @@ public class VoxelGameWindow extends GameWindow{
     }
 
     private void updateWorld(){
-        Mesh mc = Octree.createOctree(new Vector3f(0), 128).simplify(0.05f).getMesh();//MarchingCubes.createMesh(new Vector3f(camera.getPosition()).sub(64, 64, 64), 128, 1);//
+        Mesh mc = Octree.createOctree(new Vector3f(32,32,0), 64).simplify(0.1f).getMesh();//MarchingCubes.createMesh(new Vector3f(camera.getPosition()).sub(64, 64, 64), 128, 1);//
         Mesh.MeshData mcd = mc.getData();
 
 
@@ -143,14 +167,28 @@ public class VoxelGameWindow extends GameWindow{
     public void render() {
         GL11.glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT);
 
+        if(GL11.glIsEnabled(GL11.GL_CULL_FACE)) {
+            framebuffer.bind();
+            GL11.glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT);
+        }
         shader.bind();
+        texture.bind(0);
         shader.setUniform("mvp", false, camera.getCameraMatrix());
         shader.setUniform("pos", camera.getPosition());
         GL30.glBindVertexArray(vaoId);
         GL11.glDrawElements(GL11.GL_TRIANGLES, indexCount, GL11.GL_UNSIGNED_INT ,0);//GL32.GL_LINES_ADJACENCY
+        framebuffer.unbind();
 
+        if(GL11.glIsEnabled(GL11.GL_CULL_FACE)) {
+            ppshader.bind();
+            renderTexture.bind(0);
+            depthTexture.bind(1);
+            GL11.glDrawArrays(GL11.GL_TRIANGLES, 0, 6);
+        }
+        GL11.glDisable(GL11.GL_DEPTH_TEST);
         hudshader.bind();
         GL11.glDrawArrays(GL11.GL_POINTS, 0, 1);
+        GL11.glEnable(GL11.GL_DEPTH_TEST);
     }
 
     @Override
@@ -160,12 +198,21 @@ public class VoxelGameWindow extends GameWindow{
         GL30.glDeleteVertexArrays(vaoId);
         shader.delete();
         hudshader.delete();
+        ppshader.delete();
         texture.delete();
+
+        renderTexture.delete();
+        depthTexture.delete();
+        //renderBuffer.delete();
+        framebuffer.delete();
     }
 
     @Override
     public void resize(int width, int height) {
         GL11.glViewport(0, 0, width, height);
         camera.setAspect((float)width/(float)height);
+        //renderBuffer.resize(width, height);
+        renderTexture.resize(width, height);
+        depthTexture.resize(width, height);
     }
 }
