@@ -33,7 +33,7 @@ public class EmptyTexture2D extends Texture {
         GL11.glTexImage2D(GL11.GL_TEXTURE_2D, 0, mode, width, height, 0, mode, GL11.GL_FLOAT, (ByteBuffer) null);
         //GL11.glBindTexture(GL11.GL_TEXTURE_2D, getID());
         //GL42.glTexStorage2D(GL11.GL_TEXTURE_2D, 1, mode, width, height);
-        System.out.println(GL11.glGetError() == GL11.GL_NO_ERROR);
+        //System.out.println(GL11.glGetError() == GL11.GL_NO_ERROR);
     }
 
 }
