@@ -1,19 +1,29 @@
 package com.github.sidit77.voxelworld.world;
 
 import org.joml.Vector3f;
+import org.lwjgl.BufferUtils;
 
+import java.nio.FloatBuffer;
+import java.nio.IntBuffer;
 import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-public class MarchingCubes {
+public class ChunkMesher {
 
-    public static Mesh createMesh(Vector3f pos, int dim, int res){
-        ArrayList<Vector3f[]> tris = new ArrayList<>();
-        Set<Vector3f> fix = new HashSet<>() ;
-        for(int x = (int)pos.x; x < (int)pos.x + dim; x += res){
-            for(int y = (int)pos.y; y < (int)pos.y + dim; y += res){
-                for(int z = (int)pos.z; z < (int)pos.z + dim; z += res){
+    public static class Mesh{
+        public FloatBuffer vertices;
+        public IntBuffer indices;
+    }
+
+    public static Mesh createMesh(Chunk chunk, int res){
+        List<Integer> indices = new ArrayList<>();
+        List<Vector3f> vertices = new ArrayList<>();
+        Map<Vector3f, Integer> indicesMap = new HashMap<>();
+        for(int x = (int)chunk.getPosition().x; x < (int)chunk.getPosition().x + Chunk.size; x += res){
+            for(int y = (int)chunk.getPosition().y; y < (int)chunk.getPosition().y + Chunk.size; y += res){
+                for(int z = (int)chunk.getPosition().z; z < (int)chunk.getPosition().z + Chunk.size; z += res){
                     int corners = 0;
                     float[] v = new float[8];
                     Vector3f[] p = new Vector3f[8];
@@ -27,34 +37,34 @@ public class MarchingCubes {
                         continue;
 
                     for(int i = 0; i < cases[corners].length; i += 3){
-                        Vector3f[] mv = new Vector3f[3];
                         for(int j = 0; j < 3; j++){
                             int[] edge = edges[cases[corners][i+j]];
-                            mv[j] = new Vector3f(p[edge[1]]).lerp(p[edge[0]], (-v[edge[1]]) / (v[edge[0]] - v[edge[1]]));
-                            if(corner(mv[j], pos, dim)){
-                                fix.add(mv[j]);
+                            Vector3f m = new Vector3f(p[edge[1]]).lerp(p[edge[0]], 0.75f * 0.5f + 0.25f * (-v[edge[1]]) / (v[edge[0]] - v[edge[1]]));
+                            if(!indicesMap.containsKey(m)) {
+                                indicesMap.put(m, vertices.size());
+                                vertices.add(m);
                             }
+                            indices.add(indicesMap.get(m));
                         }
-                        tris.add(mv);
                     }
                 }
             }
         }
 
-        return new Mesh(tris.toArray(new Vector3f[tris.size()][3]), fix);
-    }
+        Mesh m = new Mesh();
+        m.vertices = BufferUtils.createFloatBuffer(vertices.size() * 3);
+        vertices.forEach((v)->{
+            m.vertices.put(v.x);
+            m.vertices.put(v.y);
+            m.vertices.put(v.z);
+        });
+        m.vertices.flip();
 
-    private static boolean corner(Vector3f v1, Vector3f v2, int size){
-        int i = 0;
-        i += v1.x <= v2.x ? 1 : 0;
-        i += v1.y <= v2.y ? 1 : 0;
-        i += v1.z <= v2.z ? 1 : 0;
+        m.indices = BufferUtils.createIntBuffer(indices.size());
+        indices.forEach((i)-> m.indices.put(i));
+        m.indices.flip();
 
-        i += v1.x >= v2.x + size ? 1 : 0;
-        i += v1.y >= v2.y + size ? 1 : 0;
-        i += v1.z >= v2.z + size ? 1 : 0;
-
-        return i >=2;
+        return m;
     }
 
 
@@ -342,5 +352,4 @@ public class MarchingCubes {
             new int[]{0,3,8},
             new int[]{},
     };
-
 }

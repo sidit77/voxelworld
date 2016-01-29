@@ -8,7 +8,7 @@ public class Sampler {
     //private static final HashMap<Vector3f, Float> cache = new HashMap<>();
 
     public static float sample(Vector3f pos){
-        //return -(pos.length() - 20);
+        //return -(pos.sub(4,4,4).length() - 30);
 
         float result;
 

@@ -9,10 +9,11 @@ import com.github.sidit77.voxelworld.system.GameWindow;
 import com.github.sidit77.voxelworld.system.input.Action;
 import com.github.sidit77.voxelworld.system.input.Key;
 import com.github.sidit77.voxelworld.system.input.MouseButton;
-import com.github.sidit77.voxelworld.world.Mesh;
-import com.github.sidit77.voxelworld.world.dualcontouring.Octree;
-import org.joml.Vector3f;
-import org.lwjgl.opengl.*;
+import com.github.sidit77.voxelworld.world.Terrain;
+import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL20;
+import org.lwjgl.opengl.GL30;
+import org.lwjgl.opengl.GL32;
 
 public class VoxelGameWindow extends GameWindow{
 
@@ -22,15 +23,20 @@ public class VoxelGameWindow extends GameWindow{
 
     private int emptyvao;
 
-    private int vaoId;
-    private int vboId;
-    private int indexCount;
-    private int iboId;
+    //private int vaoId;
+    //private int vboId;
+    //private int indexCount;
+    //private int iboId;
+//
+    //private int vaoId2;
+    //private int vboId2;
+    //private int indexCount2;
+    //private int iboId2;
+//
+    //private Chunk chunk1;
+    //private Chunk chunk2;
 
-    private int vaoId2;
-    private int vboId2;
-    private int indexCount2;
-    private int iboId2;
+    private Terrain terrain;
 
     private GLSLProgram shader;
     private GLSLProgram hudshader;
@@ -83,9 +89,9 @@ public class VoxelGameWindow extends GameWindow{
             if(key == Key.Tab && action == Action.Press){
                 System.out.println(camera.getPosition());
             }
-            if(key == Key.Space && action == Action.Press){
-                updateWorld();
-            }
+            //if(key == Key.Space && action == Action.Press){
+                //updateWorld();
+            //}
         });
 
         shader = new GLSLProgram()
@@ -116,59 +122,58 @@ public class VoxelGameWindow extends GameWindow{
         //camera.setPosition(60, 80, 60);
         camera.setPosition(5, 5, 15);
 
+        //chunk1 = new Chunk(new Vector3f(0,0,0).mul(Chunk.size));
+        //chunk2 = new Chunk(new Vector3f(0,0,1).mul(Chunk.size));
+
+
+        terrain = new Terrain();
+
+
         emptyvao = GL30.glGenVertexArrays();
-        vaoId = GL30.glGenVertexArrays();
-        vboId = GL15.glGenBuffers();
-        iboId = GL15.glGenBuffers();
-        GL30.glBindVertexArray(vaoId);
-
-        updateWorld();
-
-        GL20.glEnableVertexAttribArray(0);
-        GL20.glEnableVertexAttribArray(1);
-        GL20.glVertexAttribPointer(0, 3, GL11.GL_FLOAT, false, 3 * 4, 0);
-        ///GL20.glVertexAttribPointer(1, 3, GL11.GL_FLOAT, false, 6 * 4, 3 * 4);
-
-        GL30.glBindVertexArray(0);
-
-        vaoId2 = GL30.glGenVertexArrays();
-        vboId2 = GL15.glGenBuffers();
-        iboId2 = GL15.glGenBuffers();
-        GL30.glBindVertexArray(vaoId2);
-
-        updateWorld2();
-
-        GL20.glEnableVertexAttribArray(0);
-        GL20.glEnableVertexAttribArray(1);
-        GL20.glVertexAttribPointer(0, 3, GL11.GL_FLOAT, false, 3 * 4, 0);
-        ///GL20.glVertexAttribPointer(1, 3, GL11.GL_FLOAT, false, 6 * 4, 3 * 4);
-
-        GL30.glBindVertexArray(0);
+       // vaoId = GL30.glGenVertexArrays();
+       // vboId = GL15.glGenBuffers();
+       // iboId = GL15.glGenBuffers();
+       // GL30.glBindVertexArray(vaoId);
+       // updateWorld();
+       // GL20.glEnableVertexAttribArray(0);
+       // GL20.glEnableVertexAttribArray(1);
+       // GL20.glVertexAttribPointer(0, 3, GL11.GL_FLOAT, false, 3 * 4, 0);
+       // ///GL20.glVertexAttribPointer(1, 3, GL11.GL_FLOAT, false, 6 * 4, 3 * 4);
+       // GL30.glBindVertexArray(0);
+//
+       // vaoId2 = GL30.glGenVertexArrays();
+       // vboId2 = GL15.glGenBuffers();
+       // iboId2 = GL15.glGenBuffers();
+       // GL30.glBindVertexArray(vaoId2);
+       // updateWorld2();
+       // GL20.glEnableVertexAttribArray(0);
+       // GL20.glEnableVertexAttribArray(1);
+       // GL20.glVertexAttribPointer(0, 3, GL11.GL_FLOAT, false, 3 * 4, 0);
+       // ///GL20.glVertexAttribPointer(1, 3, GL11.GL_FLOAT, false, 6 * 4, 3 * 4);
+       // GL30.glBindVertexArray(0);
     }
 
-    private void updateWorld(){
-        Mesh mc = Octree.createOctree(new Vector3f(92,50,0), 64).simplify(0.1f).getMesh();//MarchingCubes.createMesh(new Vector3f(camera.getPosition()).sub(64, 64, 64), 128, 1);//
-        Mesh.MeshData mcd = mc.getData();
+  // private void updateWorld(){
+  //     ChunkMesher.Mesh mcd = ChunkMesher.createMesh(chunk1, 1);
 
-        indexCount = mcd.indices.capacity();
-        GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, vboId);
-        GL15.glBufferData(GL15.GL_ARRAY_BUFFER, mcd.vertices, GL15.GL_DYNAMIC_DRAW);
+  //     indexCount = mcd.indices.capacity();
+  //     GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, vboId);
+  //     GL15.glBufferData(GL15.GL_ARRAY_BUFFER, mcd.vertices, GL15.GL_DYNAMIC_DRAW);
 
-        GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, iboId);
-        GL15.glBufferData(GL15.GL_ELEMENT_ARRAY_BUFFER, mcd.indices, GL15.GL_DYNAMIC_DRAW);
-    }
+  //     GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, iboId);
+  //     GL15.glBufferData(GL15.GL_ELEMENT_ARRAY_BUFFER, mcd.indices, GL15.GL_DYNAMIC_DRAW);
+  // }
 
-    private void updateWorld2(){
-        Mesh mc = Octree.createOctree(new Vector3f(32,50,0), 64).simplify(0.1f).getMesh();//MarchingCubes.createMesh(new Vector3f(camera.getPosition()).sub(64, 64, 64), 128, 1);//
-        Mesh.MeshData mcd = mc.getData();
+  // private void updateWorld2(){
+  //     ChunkMesher.Mesh mcd = ChunkMesher.createMesh(chunk2, 1);
 
-        indexCount2 = mcd.indices.capacity();
-        GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, vboId2);
-        GL15.glBufferData(GL15.GL_ARRAY_BUFFER, mcd.vertices, GL15.GL_DYNAMIC_DRAW);
+  //     indexCount2 = mcd.indices.capacity();
+  //     GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, vboId2);
+  //     GL15.glBufferData(GL15.GL_ARRAY_BUFFER, mcd.vertices, GL15.GL_DYNAMIC_DRAW);
 
-        GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, iboId2);
-        GL15.glBufferData(GL15.GL_ELEMENT_ARRAY_BUFFER, mcd.indices, GL15.GL_DYNAMIC_DRAW);
-    }
+  //     GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, iboId2);
+  //     GL15.glBufferData(GL15.GL_ELEMENT_ARRAY_BUFFER, mcd.indices, GL15.GL_DYNAMIC_DRAW);
+  // }
 
     @Override
     public void update(double time) {
@@ -189,6 +194,8 @@ public class VoxelGameWindow extends GameWindow{
         if(!getMouse().isCursorEnabled()){
             camera.addRotation(getMouse().getDeltaMouseX()/(float)(getWidth()/2), -getMouse().getDeltaMouseY()/(float)(getHeight()/2));
         }
+
+        terrain.update(camera.getPosition());
     }
 
     @Override
@@ -204,13 +211,17 @@ public class VoxelGameWindow extends GameWindow{
         texture.bind(0);
         shader.setUniform("mvp", false, camera.getCameraMatrix());
         shader.setUniform("pos", camera.getPosition());
-        GL30.glBindVertexArray(vaoId);
-        GL11.glDrawElements(GL11.GL_TRIANGLES, indexCount, GL11.GL_UNSIGNED_INT ,0);
 
-        if(!getKeyboard().isKeyDown(Key.X)) {
-            GL30.glBindVertexArray(vaoId2);
-            GL11.glDrawElements(GL11.GL_TRIANGLES, indexCount2, GL11.GL_UNSIGNED_INT, 0);
-        }
+        terrain.render(camera);
+        //if(!getKeyboard().isKeyDown(Key.C)) {
+        //    GL30.glBindVertexArray(vaoId);
+        //    GL11.glDrawElements(GL11.GL_TRIANGLES, indexCount, GL11.GL_UNSIGNED_INT, 0);
+        //}
+//
+        //if(!getKeyboard().isKeyDown(Key.X)) {
+        //    GL30.glBindVertexArray(vaoId2);
+        //    GL11.glDrawElements(GL11.GL_TRIANGLES, indexCount2, GL11.GL_UNSIGNED_INT, 0);
+        //}
 
         framebuffer.unbind();
 
@@ -230,10 +241,18 @@ public class VoxelGameWindow extends GameWindow{
 
     @Override
     public void destroy() {
-        GL15.glDeleteBuffers(vboId);
-        GL15.glDeleteBuffers(iboId);
-        GL30.glDeleteVertexArrays(vaoId);
+        //GL15.glDeleteBuffers(vboId);
+        //GL15.glDeleteBuffers(iboId);
+        //GL30.glDeleteVertexArrays(vaoId);
+//
+        //GL15.glDeleteBuffers(vboId2);
+        //GL15.glDeleteBuffers(iboId2);
+        //GL30.glDeleteVertexArrays(vaoId2);
+
+        terrain.delete();
+
         GL30.glDeleteVertexArrays(emptyvao);
+
         shader.delete();
         hudshader.delete();
         ppshader.delete();
