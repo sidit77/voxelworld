@@ -11,7 +11,18 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
+//TODO add shader to this class (maybe put all the rendering stuff into another class)
+//TODO additional chunks into the buffer
+//TODO draw additional chunks
+//TODO reuse chunk mesh
+//TODO multi thread chunk generation
+//TODO save chunks to disk
+//TODO keep the cache small
+//TODO make the terrain editable
+
 public class Terrain {
+
+    public static final int viewdistance = 2;
 
     private int vaoId;
     private int vboId;
@@ -23,27 +34,29 @@ public class Terrain {
 
     public Terrain(){
         chunks = new HashMap<>();
-        currentChunk = getChunkAt(new Vector3f(0,0,0));
 
         vaoId = GL30.glGenVertexArrays();
         vboId = GL15.glGenBuffers();
         iboId = GL15.glGenBuffers();
         GL30.glBindVertexArray(vaoId);
-        updateWorld();
+        GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, vboId);
+        GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, iboId);
         GL20.glEnableVertexAttribArray(0);
         GL20.glVertexAttribPointer(0, 3, GL11.GL_FLOAT, false, 3 * 4, 0);
         GL30.glBindVertexArray(0);
     }
 
     private void updateWorld(){
+        long time = System.nanoTime();
         ChunkMesher.Mesh mcd = ChunkMesher.createMesh(currentChunk, 1);
 
-        indexCount = mcd.indices.capacity();
+        indexCount = mcd.indicesCount;
         GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, vboId);
         GL15.glBufferData(GL15.GL_ARRAY_BUFFER, mcd.vertices, GL15.GL_DYNAMIC_DRAW);
 
         GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, iboId);
         GL15.glBufferData(GL15.GL_ELEMENT_ARRAY_BUFFER, mcd.indices, GL15.GL_DYNAMIC_DRAW);
+        System.out.println("Needed " + ((double)(System.nanoTime() - time))/1000000000 + " seconds to create the mesh");
     }
 
     public void update(Vector3f pos){

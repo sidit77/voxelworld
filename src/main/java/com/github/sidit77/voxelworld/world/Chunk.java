@@ -4,7 +4,7 @@ import org.joml.Vector3f;
 
 public class Chunk {
 
-    public static final int size = 64;
+    public static final int size = 32;
 
     private float[][][] density;
     private Vector3f position;
