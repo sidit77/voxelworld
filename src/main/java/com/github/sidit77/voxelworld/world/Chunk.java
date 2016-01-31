@@ -15,7 +15,7 @@ public class Chunk {
         for(int x = 0; x <= size; x++){
             for(int y = 0; y <= size; y++){
                 for(int z = 0; z <= size; z++){
-                    density[x][y][z] = Sampler.sample(new Vector3f(x,y,z));
+                    density[x][y][z] = Sampler.sample(new Vector3f(x,y,z).add(position));
                 }
             }
         }

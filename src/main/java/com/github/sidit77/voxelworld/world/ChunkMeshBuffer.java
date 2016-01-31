@@ -45,9 +45,9 @@ public class ChunkMeshBuffer {
         GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, iboId);
         GL15.glBufferSubData(GL15.GL_ELEMENT_ARRAY_BUFFER, chunkmeshindexsize * nr, mcd.indices);
 
-        System.out.println("Needed " + ((double)(System.nanoTime() - time))/1000000000 + " seconds to create the mesh.");
-        System.out.println("vertex buffer usage: " + ((float)mcd.vertices.capacity() / chunkmeshvertexsize) * 100 + "%");
-        System.out.println("index buffer usage: " + ((float)mcd.indices.capacity() / chunkmeshindexsize) * 100 + "%");
+        //System.out.println("Needed " + ((double)(System.nanoTime() - time))/1000000000 + " seconds to create the mesh.");
+        //System.out.println("vertex buffer usage: " + ((float)mcd.vertices.capacity() / chunkmeshvertexsize) * 100 + "%");
+        //System.out.println("index buffer usage: " + ((float)mcd.indices.capacity() / chunkmeshindexsize) * 100 + "%");
     }
 
     public void render(){

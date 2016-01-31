@@ -22,15 +22,16 @@ public class ChunkMesher {
         List<Integer> indices = new ArrayList<>();
         List<Vector3f> vertices = new ArrayList<>();
         Map<Vector3f, Integer> indicesMap = new HashMap<>();
-        for(int x = (int)chunk.getPosition().x; x < (int)chunk.getPosition().x + Chunk.size; x += res){
-            for(int y = (int)chunk.getPosition().y; y < (int)chunk.getPosition().y + Chunk.size; y += res){
-                for(int z = (int)chunk.getPosition().z; z < (int)chunk.getPosition().z + Chunk.size; z += res){
+        for(int x = 0; x < Chunk.size; x += res){
+            for(int y = 0; y < Chunk.size; y += res){
+                for(int z = 0; z < Chunk.size; z += res){
                     int corners = 0;
                     float[] v = new float[8];
                     Vector3f[] p = new Vector3f[8];
                     for(int i = 0; i < 8; i++){
                         p[i] = new Vector3f(vertex[i]).mul(res).add(x,y,z);
-                        v[i] = Sampler.sample(new Vector3f(p[i]));
+                        v[i] = chunk.getDensity((int)p[i].x, (int)p[i].y, (int)p[i].z);
+                        p[i].add(chunk.getPosition());
                         corners |= (v[i] > 0 ? 1 : 0) << i;
                     }
 

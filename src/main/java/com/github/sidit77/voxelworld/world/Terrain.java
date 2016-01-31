@@ -1,12 +1,12 @@
 package com.github.sidit77.voxelworld.world;
 
-import com.github.sidit77.voxelworld.Camera;
 import org.joml.Vector3f;
 
 import java.util.*;
 
 //TODO add shader to this class (maybe put all the rendering stuff into another class)
 //TODO reuse chunk mesh
+//TODO load chunk in a sphere around the player instead of a cube
 //TODO multi thread chunk generation
 //TODO save chunks to disk
 //TODO keep the cache small
@@ -75,7 +75,7 @@ public class Terrain {
         }
     }
 
-    public void render(Camera camera){
+    public void render(){
         meshBuffer.render();
     }
 
