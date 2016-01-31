@@ -2,18 +2,10 @@ package com.github.sidit77.voxelworld.world;
 
 import com.github.sidit77.voxelworld.Camera;
 import org.joml.Vector3f;
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL15;
-import org.lwjgl.opengl.GL20;
-import org.lwjgl.opengl.GL30;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 //TODO add shader to this class (maybe put all the rendering stuff into another class)
-//TODO additional chunks into the buffer
-//TODO draw additional chunks
 //TODO reuse chunk mesh
 //TODO multi thread chunk generation
 //TODO save chunks to disk
@@ -24,68 +16,81 @@ public class Terrain {
 
     public static final int viewdistance = 2;
 
-    private int vaoId;
-    private int vboId;
-    private int indexCount;
-    private int iboId;
+    private ChunkMeshBuffer meshBuffer;
 
     private Map<ChunkIndex, Chunk> chunks;
     private Chunk currentChunk = null;
+    private Map<ChunkIndex, Integer> loadedChunks;
 
     public Terrain(){
         chunks = new HashMap<>();
+        loadedChunks = new HashMap<>();
 
-        vaoId = GL30.glGenVertexArrays();
-        vboId = GL15.glGenBuffers();
-        iboId = GL15.glGenBuffers();
-        GL30.glBindVertexArray(vaoId);
-        GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, vboId);
-        GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, iboId);
-        GL20.glEnableVertexAttribArray(0);
-        GL20.glVertexAttribPointer(0, 3, GL11.GL_FLOAT, false, 3 * 4, 0);
-        GL30.glBindVertexArray(0);
-    }
-
-    private void updateWorld(){
-        long time = System.nanoTime();
-        ChunkMesher.Mesh mcd = ChunkMesher.createMesh(currentChunk, 1);
-
-        indexCount = mcd.indicesCount;
-        GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, vboId);
-        GL15.glBufferData(GL15.GL_ARRAY_BUFFER, mcd.vertices, GL15.GL_DYNAMIC_DRAW);
-
-        GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, iboId);
-        GL15.glBufferData(GL15.GL_ELEMENT_ARRAY_BUFFER, mcd.indices, GL15.GL_DYNAMIC_DRAW);
-        System.out.println("Needed " + ((double)(System.nanoTime() - time))/1000000000 + " seconds to create the mesh");
+        meshBuffer = new ChunkMeshBuffer(((viewdistance-1)*2+1)*((viewdistance-1)*2+1)*((viewdistance-1)*2+1));
     }
 
     public void update(Vector3f pos){
-        Chunk newChunk = getChunkAt(pos);
+        Chunk newChunk = getChunkAt(new ChunkIndex(pos));
         if(currentChunk != newChunk){
             currentChunk = newChunk;
-            updateWorld();
+            System.out.println("###################");
+            List<Integer> ids = new ArrayList<>();
+            for(int i = 0; i < ((viewdistance-1)*2+1)*((viewdistance-1)*2+1)*((viewdistance-1)*2+1); i++){
+                ids.add(i);
+            }
+            Set<ChunkIndex> unloadedChunks = new HashSet<>();
+            for(int x = -viewdistance+1; x < viewdistance; x++){
+                for(int y = -viewdistance+1; y < viewdistance; y++){
+                    for(int z = -viewdistance+1; z < viewdistance; z++){
+                        ChunkIndex ci = new ChunkIndex(pos, x,y,z);
+                        if(loadedChunks.containsKey(ci)){
+                            ids.remove(loadedChunks.get(ci));
+                        }else{
+                            unloadedChunks.add(ci);
+                        }
+                    }
+                }
+            }
+            Set<ChunkIndex> unusedChunks = new HashSet<>();
+            loadedChunks.forEach((ChunkIndex ci, Integer id)->{
+                if(ids.contains(id)){
+                    unusedChunks.add(ci);
+                }
+            });
+            unusedChunks.forEach((ci)-> loadedChunks.remove(ci));
+
+            for(ChunkIndex ci : unloadedChunks){
+                if(!ids.isEmpty()){
+                    int id = ids.get(0);
+                    ids.remove(0);
+                    meshBuffer.setToChunk(id, getChunkAt(ci));
+                    loadedChunks.put(ci, id);
+                }
+
+            }
+
+            System.out.println("######################");
+            System.out.println("loaded " + unloadedChunks.size() + " new chunks!");
+
         }
     }
 
     public void render(Camera camera){
-        GL30.glBindVertexArray(vaoId);
-        GL11.glDrawElements(GL11.GL_TRIANGLES, indexCount, GL11.GL_UNSIGNED_INT, 0);
+        meshBuffer.render();
     }
 
     public void delete(){
-        GL15.glDeleteBuffers(vboId);
-        GL15.glDeleteBuffers(iboId);
-        GL30.glDeleteVertexArrays(vaoId);
+        meshBuffer.delete();
     }
 
-    private Chunk getChunkAt(Vector3f pos){
-        ChunkIndex ci = new ChunkIndex(pos);
+    private Chunk getChunkAt(ChunkIndex ci){
         if(!chunks.containsKey(ci)){
             chunks.put(ci, new Chunk(ci.getChunkPosition()));
             System.out.println("Created Chunk: " + ci);
         }
         return chunks.get(ci);
     }
+
 
     private class ChunkIndex{
         private int x;
@@ -96,6 +101,12 @@ public class Terrain {
             this.x = (int)Math.floor(pos.x / Chunk.size);
             this.y = (int)Math.floor(pos.y / Chunk.size);
             this.z = (int)Math.floor(pos.z / Chunk.size);
+        }
+
+        public ChunkIndex(Vector3f pos, int dx, int dy, int dz){
+            this.x = (int)Math.floor(pos.x / Chunk.size) + dx;
+            this.y = (int)Math.floor(pos.y / Chunk.size) + dy;
+            this.z = (int)Math.floor(pos.z / Chunk.size) + dz;
         }
 
         public Vector3f getChunkPosition(){
@@ -121,5 +132,18 @@ public class Terrain {
         public String toString(){
             return x + "|" + y + "|" + z;
         }
+    }
+
+    private class LoadedChunk{
+        private Chunk chunk;
+        private int id;
+        public LoadedChunk(Chunk chunk, int id){
+            this.chunk = chunk;
+            this.id = id;
+        }
+        public int getID(){
+            return id;
+        }
+
     }
 }

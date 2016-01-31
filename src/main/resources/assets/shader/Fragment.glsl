@@ -39,6 +39,8 @@ void main() {
     vec4 color = vec4(0.25,0.6,0.25,1) * blended_color;
     //color = floor(color * 5) * 0.2;
     //light = floor(light * 5) * 0.2;
+    //diffuselight = floor(diffuselight * 5) * 0.2;
+    //specularLight = floor(specularLight * 5) * 0.2;
     pixel = color * diffuselight + color * specularLight;//vec4(color * light,1);
     if(fog){
         pixel = mix(vec4(0.7,0.7,0.7,1), pixel, fs_in.visibility);

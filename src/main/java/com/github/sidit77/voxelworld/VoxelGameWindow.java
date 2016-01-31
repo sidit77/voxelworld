@@ -119,8 +119,8 @@ public class VoxelGameWindow extends GameWindow{
         framebuffer.unbind();
 
         camera = new Camera(75, (float)getWidth()/(float)getHeight());
-        //camera.setPosition(60, 80, 60);
-        camera.setPosition(5, 5, 15);
+        camera.setPosition(60, 80, 60);
+        //camera.setPosition(5, 5, 15);
 
         //chunk1 = new Chunk(new Vector3f(0,0,0).mul(Chunk.size));
         //chunk2 = new Chunk(new Vector3f(0,0,1).mul(Chunk.size));

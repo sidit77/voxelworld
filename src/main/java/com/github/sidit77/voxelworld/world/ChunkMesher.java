@@ -12,9 +12,6 @@ import java.util.Map;
 
 public class ChunkMesher {
 
-    public static final int chunkmeshvertexsize = (Chunk.size + 1) * (Chunk.size + 1) * (Chunk.size + 1);
-    public static final int chunkmeshindexsize = Chunk.size * Chunk.size * Chunk.size * 5;
-
     public static class Mesh{
         public FloatBuffer vertices;
         public IntBuffer indices;
@@ -69,9 +66,6 @@ public class ChunkMesher {
         m.indices.flip();
 
         m.indicesCount = indices.size();
-
-        System.out.println((double)vertices.size()/chunkmeshvertexsize);
-        System.out.println((double)indices.size()/chunkmeshindexsize);
 
         return m;
     }
