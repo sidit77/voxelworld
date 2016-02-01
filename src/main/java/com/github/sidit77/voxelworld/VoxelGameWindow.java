@@ -10,6 +10,7 @@ import com.github.sidit77.voxelworld.system.input.Action;
 import com.github.sidit77.voxelworld.system.input.Key;
 import com.github.sidit77.voxelworld.system.input.MouseButton;
 import com.github.sidit77.voxelworld.world.Terrain;
+import org.joml.Vector3f;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL20;
 import org.lwjgl.opengl.GL30;
@@ -132,8 +133,18 @@ public class VoxelGameWindow extends GameWindow{
         if(!getMouse().isCursorEnabled()){
             camera.addRotation(getMouse().getDeltaMouseX()/(float)(getWidth()/2), -getMouse().getDeltaMouseY()/(float)(getHeight()/2));
         }
-
-        terrain.update(camera.getPosition());
+        if(!getKeyboard().isKeyDown(Key.Space)){
+            terrain.update(camera.getPosition());
+        }
+        if(!getMouse().isCursorEnabled() && getMouse().isButtonDown(MouseButton.Left)){
+            for(int x = -3; x <= 3; x++){
+                for(int y = -3; y <= 3; y++){
+                    for(int z = -3; z <= 3; z++){
+                        terrain.setDensity(new Vector3f(camera.getPosition()).add(x,y,z),1);
+                    }
+                }
+            }
+        }
     }
 
     @Override

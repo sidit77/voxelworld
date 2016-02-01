@@ -31,6 +31,7 @@ public class ChunkMeshBuffer {
     }
 
     //TODO error spotting (offsets)
+    //TODO split the chunks into a muliple buffers if needed
 
     public void setToChunk(int nr, Chunk chunk){
         assert(nr < indexCounts.length);
@@ -55,6 +56,10 @@ public class ChunkMeshBuffer {
         for(int i = 0; i < indexCounts.length; i++){
             GL32.glDrawElementsBaseVertex(GL11.GL_TRIANGLES, indexCounts[i], GL11.GL_UNSIGNED_INT, chunkmeshindexsize * i, chunkmeshvertexsize * i / 3);
         }
+    }
+
+    public int getMaxNumberOfSlots(){
+        return indexCounts.length;
     }
 
     public void delete(){

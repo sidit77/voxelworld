@@ -6,7 +6,6 @@ import java.util.*;
 
 //TODO add shader to this class (maybe put all the rendering stuff into another class)
 //TODO reuse chunk mesh
-//TODO load chunk in a sphere around the player instead of a cube
 //TODO multi thread chunk generation
 //TODO save chunks to disk
 //TODO keep the cache small
@@ -14,19 +13,20 @@ import java.util.*;
 
 public class Terrain {
 
-    public static final int viewdistance = 2;
+    public static final int viewdistance = 3;
 
     private ChunkMeshBuffer meshBuffer;
 
     private Map<ChunkIndex, Chunk> chunks;
     private Chunk currentChunk = null;
     private Map<ChunkIndex, Integer> loadedChunks;
+    private Set<ChunkIndex> chunksToRemesh;
 
     public Terrain(){
         chunks = new HashMap<>();
         loadedChunks = new HashMap<>();
-
-        meshBuffer = new ChunkMeshBuffer(((viewdistance-1)*2+1)*((viewdistance-1)*2+1)*((viewdistance-1)*2+1));
+        chunksToRemesh = new HashSet<>();
+        meshBuffer = new ChunkMeshBuffer(getChunkIndices(new Vector3f(0)).size());
     }
 
     public void update(Vector3f pos){
@@ -35,22 +35,17 @@ public class Terrain {
             currentChunk = newChunk;
             System.out.println("###################");
             List<Integer> ids = new ArrayList<>();
-            for(int i = 0; i < ((viewdistance-1)*2+1)*((viewdistance-1)*2+1)*((viewdistance-1)*2+1); i++){
+            for(int i = 0; i < meshBuffer.getMaxNumberOfSlots(); i++){
                 ids.add(i);
             }
             Set<ChunkIndex> unloadedChunks = new HashSet<>();
-            for(int x = -viewdistance+1; x < viewdistance; x++){
-                for(int y = -viewdistance+1; y < viewdistance; y++){
-                    for(int z = -viewdistance+1; z < viewdistance; z++){
-                        ChunkIndex ci = new ChunkIndex(pos, x,y,z);
-                        if(loadedChunks.containsKey(ci)){
-                            ids.remove(loadedChunks.get(ci));
-                        }else{
-                            unloadedChunks.add(ci);
-                        }
-                    }
+            getChunkIndices(pos).forEach((ci)->{
+                if(loadedChunks.containsKey(ci) && !chunksToRemesh.contains(ci)){
+                    ids.remove(loadedChunks.get(ci));
+                }else{
+                    unloadedChunks.add(ci);
                 }
-            }
+            });
             Set<ChunkIndex> unusedChunks = new HashSet<>();
             loadedChunks.forEach((ChunkIndex ci, Integer id)->{
                 if(ids.contains(id)){
@@ -59,19 +54,25 @@ public class Terrain {
             });
             unusedChunks.forEach((ci)-> loadedChunks.remove(ci));
 
-            for(ChunkIndex ci : unloadedChunks){
+
+            unloadedChunks.stream().forEach((ci)->{
                 if(!ids.isEmpty()){
                     int id = ids.get(0);
                     ids.remove(0);
                     meshBuffer.setToChunk(id, getChunkAt(ci));
                     loadedChunks.put(ci, id);
                 }
-
-            }
+            });
 
             System.out.println("######################");
             System.out.println("loaded " + unloadedChunks.size() + " new chunks!");
 
+        }else{
+            chunksToRemesh.stream().forEach((ci) -> {
+                if(loadedChunks.containsKey(ci)){
+                    meshBuffer.setToChunk(loadedChunks.get(ci), getChunkAt(ci));
+                }
+            });
         }
     }
 
@@ -83,6 +84,22 @@ public class Terrain {
         meshBuffer.delete();
     }
 
+    public float getDensity(Vector3f pos){
+        Chunk chunk = getChunkAt(new ChunkIndex(pos));
+        Vector3f vec = pos.sub(chunk.getPosition());
+        return chunk.getDensity((int)vec.x,(int)vec.y,(int)vec.z);
+    }
+
+    public void setDensity(Vector3f pos, float value){
+        ChunkIndex ci = new ChunkIndex(pos);
+        Chunk chunk = getChunkAt(ci);
+        Vector3f vec = pos.sub(chunk.getPosition());
+        chunk.setDensity((int)vec.x,(int)vec.y,(int)vec.z, value);
+        if(!chunksToRemesh.contains(ci)) {
+            chunksToRemesh.add(ci);
+        }
+    }
+
     private Chunk getChunkAt(ChunkIndex ci){
         if(!chunks.containsKey(ci)){
             chunks.put(ci, new Chunk(ci.getChunkPosition()));
@@ -91,6 +108,19 @@ public class Terrain {
         return chunks.get(ci);
     }
 
+    private Set<ChunkIndex> getChunkIndices(Vector3f pos){
+        Set<ChunkIndex> result = new HashSet<>();
+        for(int x = -viewdistance+1; x < viewdistance; x++) {
+            for (int y = -viewdistance + 1; y < viewdistance; y++) {
+                for (int z = -viewdistance + 1; z < viewdistance; z++) {
+                    if((x*x)+(y*y)+(z*z) < viewdistance*viewdistance){
+                        result.add(new ChunkIndex(pos, x, y, z));
+                    }
+                }
+            }
+        }
+        return result;
+    }
 
     private class ChunkIndex{
         private int x;
@@ -132,18 +162,5 @@ public class Terrain {
         public String toString(){
             return x + "|" + y + "|" + z;
         }
-    }
-
-    private class LoadedChunk{
-        private Chunk chunk;
-        private int id;
-        public LoadedChunk(Chunk chunk, int id){
-            this.chunk = chunk;
-            this.id = id;
-        }
-        public int getID(){
-            return id;
-        }
-
     }
 }

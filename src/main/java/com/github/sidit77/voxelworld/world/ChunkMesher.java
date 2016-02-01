@@ -22,14 +22,17 @@ public class ChunkMesher {
         List<Integer> indices = new ArrayList<>();
         List<Vector3f> vertices = new ArrayList<>();
         Map<Vector3f, Integer> indicesMap = new HashMap<>();
+
+        Vector3f[] p = {new Vector3f(),new Vector3f(),new Vector3f(),new Vector3f(),new Vector3f(),new Vector3f(),new Vector3f(),new Vector3f()};
+        int index = 0;
+
         for(int x = 0; x < Chunk.size; x += res){
             for(int y = 0; y < Chunk.size; y += res){
                 for(int z = 0; z < Chunk.size; z += res){
                     int corners = 0;
                     float[] v = new float[8];
-                    Vector3f[] p = new Vector3f[8];
                     for(int i = 0; i < 8; i++){
-                        p[i] = new Vector3f(vertex[i]).mul(res).add(x,y,z);
+                        p[i].set(vertex[i]).mul(res).add(x,y,z);
                         v[i] = chunk.getDensity((int)p[i].x, (int)p[i].y, (int)p[i].z);
                         p[i].add(chunk.getPosition());
                         corners |= (v[i] > 0 ? 1 : 0) << i;
@@ -38,14 +41,15 @@ public class ChunkMesher {
                     if(corners == 0 || corners == 255)
                         continue;
 
-                    for(int i = 0; i < cases[corners].length; i += 3){
-                        for(int j = 0; j < 3; j++){
-                            int[] edge = edges[cases[corners][i+j]];
-                            Vector3f m = new Vector3f(p[edge[1]]).lerp(p[edge[0]], 0.75f * 0.5f + 0.25f * (-v[edge[1]]) / (v[edge[0]] - v[edge[1]]));
-                            if(!indicesMap.containsKey(m)) {
-                                indicesMap.put(m, vertices.size());
-                                vertices.add(m);
-                            }
+                    for(int i = 0; i < cases[corners].length; i += 1){
+                        int[] edge = edges[cases[corners][i]];
+                        Vector3f m = new Vector3f(p[edge[1]]).lerp(p[edge[0]], 0.75f * 0.5f + 0.25f * (-v[edge[1]]) / (v[edge[0]] - v[edge[1]]));
+                        if(!indicesMap.containsKey(m)) {
+                            indicesMap.put(m, index);
+                            indices.add(index);
+                            index++;
+                            vertices.add(m);
+                        }else{
                             indices.add(indicesMap.get(m));
                         }
                     }
