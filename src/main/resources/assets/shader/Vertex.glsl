@@ -13,7 +13,7 @@ out VS_OUT{
 } vs_out;
 
 const float density = 0.01;
-const float gradient = 1.5;
+const float gradient = 4;
 
 void main() {
     gl_Position = mvp * vec4(position,1);

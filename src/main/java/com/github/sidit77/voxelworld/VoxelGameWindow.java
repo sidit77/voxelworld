@@ -11,10 +11,7 @@ import com.github.sidit77.voxelworld.system.input.Key;
 import com.github.sidit77.voxelworld.system.input.MouseButton;
 import com.github.sidit77.voxelworld.world.Terrain;
 import org.joml.Vector3f;
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL20;
-import org.lwjgl.opengl.GL30;
-import org.lwjgl.opengl.GL32;
+import org.lwjgl.opengl.*;
 
 public class VoxelGameWindow extends GameWindow{
 
@@ -29,8 +26,13 @@ public class VoxelGameWindow extends GameWindow{
     private GLSLProgram shader;
     private GLSLProgram hudshader;
     private GLSLProgram ppshader;
-    private Texture2D texture;
+    private GLSLProgram skyboxShader;
+    private Texture2D colortexture;
+    private Texture2D normaltexture;
+    private Texture2D skytexture;
+    private Texture2D glowtexture;
     private Camera camera;
+    private float time;
     private boolean fog = false;
 
     EmptyTexture2D renderTexture;
@@ -83,6 +85,7 @@ public class VoxelGameWindow extends GameWindow{
                 .attachShaderAndDelete(GLSLShader.fromFile("assets/shader/Vertex.glsl", GL20.GL_VERTEX_SHADER))
                 .attachShaderAndDelete(GLSLShader.fromFile("assets/shader/Fragment.glsl", GL20.GL_FRAGMENT_SHADER))
                 .attachShaderAndDelete(GLSLShader.fromFile("assets/shader/Geometry.glsl", GL32.GL_GEOMETRY_SHADER))
+                .attachShaderAndDelete(GLSLShader.fromFile("assets/shader/SkyColor.glsl", GL20.GL_FRAGMENT_SHADER))
                 .link();
 
         hudshader = new GLSLProgram()
@@ -90,12 +93,23 @@ public class VoxelGameWindow extends GameWindow{
                 .attachShaderAndDelete(GLSLShader.fromFile("assets/shader/HUDFragment.glsl", GL20.GL_FRAGMENT_SHADER))
                 .link();
 
+        skyboxShader = new GLSLProgram()
+                .attachShaderAndDelete(GLSLShader.fromFile("assets/shader/SkyboxVertex.glsl", GL20.GL_VERTEX_SHADER))
+                .attachShaderAndDelete(GLSLShader.fromFile("assets/shader/SkyboxFragment.glsl", GL20.GL_FRAGMENT_SHADER))
+                .attachShaderAndDelete(GLSLShader.fromFile("assets/shader/SkyColor.glsl", GL20.GL_FRAGMENT_SHADER))
+                .link();
+
         ppshader = new GLSLProgram()
                 .attachShaderAndDelete(GLSLShader.fromFile("assets/shader/FullscreenVertex.glsl", GL20.GL_VERTEX_SHADER))
                 .attachShaderAndDelete(GLSLShader.fromFile("assets/shader/FullscreenFragment.glsl", GL20.GL_FRAGMENT_SHADER))
                 .link();
 
-        texture = Texture2D.fromFile("assets/texture/grass.png");
+        colortexture = Texture2D.fromFile("assets/texture/dirt.png");
+        normaltexture = Texture2D.fromFile("assets/texture/dirt_normal.png");
+        skytexture = Texture2D.fromFile("assets/texture/sky.png");
+        skytexture.setWarpMode(GL12.GL_CLAMP_TO_EDGE);
+        glowtexture = Texture2D.fromFile("assets/texture/glow.png");
+        glowtexture.setWarpMode(GL12.GL_CLAMP_TO_EDGE);
 
         renderTexture = new EmptyTexture2D(getWidth(), getHeight());
         depthTexture = new EmptyTexture2D(getWidth(), getHeight(), GL11.GL_DEPTH_COMPONENT);
@@ -119,47 +133,68 @@ public class VoxelGameWindow extends GameWindow{
         setTitle("Voxel Game (" + Math.round(1/time) + ")");
 
         if(getKeyboard().isKeyDown(Key.W)){
-            camera.addPosition(camera.getForward().mul(!getKeyboard().isKeyDown(Key.LeftShift)?1f:3));
+            camera.addPosition(camera.getForward().mul(!getKeyboard().isKeyDown(Key.LeftShift)?1f:0.3f));
         }
         if(getKeyboard().isKeyDown(Key.S)){
-            camera.addPosition(camera.getBack()   .mul(!getKeyboard().isKeyDown(Key.LeftShift)?1f:3));
+            camera.addPosition(camera.getBack()   .mul(!getKeyboard().isKeyDown(Key.LeftShift)?1f:0.3f));
         }
         if(getKeyboard().isKeyDown(Key.A)){
-            camera.addPosition(camera.getLeft()   .mul(!getKeyboard().isKeyDown(Key.LeftShift)?1f:3));
+            camera.addPosition(camera.getLeft()   .mul(!getKeyboard().isKeyDown(Key.LeftShift)?1f:0.3f));
         }
         if(getKeyboard().isKeyDown(Key.D)){
-            camera.addPosition(camera.getRight()  .mul(!getKeyboard().isKeyDown(Key.LeftShift)?1f:3));
+            camera.addPosition(camera.getRight()  .mul(!getKeyboard().isKeyDown(Key.LeftShift)?1f:0.3f));
         }
         if(!getMouse().isCursorEnabled()){
             camera.addRotation(getMouse().getDeltaMouseX()/(float)(getWidth()/2), -getMouse().getDeltaMouseY()/(float)(getHeight()/2));
         }
         if(!getKeyboard().isKeyDown(Key.Space)){
             terrain.update(camera.getPosition());
+            this.time += time;
+        }
+        if(getKeyboard().isKeyDown(Key.F)){
+            camera.setPosition(0,0,0);
         }
         if(!getMouse().isCursorEnabled() && getMouse().isButtonDown(MouseButton.Left)){
             for(int x = -3; x <= 3; x++){
                 for(int y = -3; y <= 3; y++){
                     for(int z = -3; z <= 3; z++){
-                        terrain.setDensity(new Vector3f(camera.getPosition()).add(x,y,z),1);
+                        //terrain.setDensity(new Vector3f(camera.getPosition()).add(x,y,z),1);
                     }
                 }
             }
         }
+
     }
 
     @Override
     public void render() {
         GL11.glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT);
 
+        Vector3f lightDir = new Vector3f((float)Math.cos(time/5), (float)Math.sin(time/5),(float)Math.sin(time/5) * 0.5f);
+
         if(GL11.glIsEnabled(GL11.GL_CULL_FACE)) {
             framebuffer.bind();
             GL11.glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT);
+
+            GL11.glDisable(GL11.GL_DEPTH_TEST);
+            skytexture.bind(0);
+            glowtexture.bind(1);
+            skyboxShader.bind();
+            skyboxShader.setUniform("view_matrix", false, camera.getViewMatrix());
+            skyboxShader.setUniform("lightDir", lightDir);
+            GL11.glDrawArrays(GL11.GL_TRIANGLES, 0, 36);
+            GL11.glEnable(GL11.GL_DEPTH_TEST);
         }
 
         shader.bind();
-        texture.bind(0);
+        colortexture.bind(0);
+        normaltexture.bind(1);
+        glowtexture.bind(2);
+        skytexture.bind(3);
         shader.setUniform("mvp", false, camera.getCameraMatrix());
         shader.setUniform("pos", camera.getPosition());
+        shader.setUniform("lightDir", lightDir);
+        shader.setUniform("lightPower", Math.max(0, lightDir.y));
 
         terrain.render();
 
@@ -188,7 +223,11 @@ public class VoxelGameWindow extends GameWindow{
         shader.delete();
         hudshader.delete();
         ppshader.delete();
-        texture.delete();
+        colortexture.delete();
+        normaltexture.delete();
+        skytexture.delete();
+        glowtexture.delete();
+        skyboxShader.delete();
 
         renderTexture.delete();
         depthTexture.delete();

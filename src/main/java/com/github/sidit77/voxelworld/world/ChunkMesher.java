@@ -3,8 +3,6 @@ package com.github.sidit77.voxelworld.world;
 import org.joml.Vector3f;
 import org.lwjgl.BufferUtils;
 
-import java.nio.FloatBuffer;
-import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -12,13 +10,7 @@ import java.util.Map;
 
 public class ChunkMesher {
 
-    public static class Mesh{
-        public FloatBuffer vertices;
-        public IntBuffer indices;
-        public int indicesCount;
-    }
-
-    public static Mesh createMesh(Chunk chunk, int res){
+    public static ChunkMesh createMesh(Chunk chunk, int res){
         List<Integer> indices = new ArrayList<>();
         List<Vector3f> vertices = new ArrayList<>();
         Map<Vector3f, Integer> indicesMap = new HashMap<>();
@@ -57,7 +49,7 @@ public class ChunkMesher {
             }
         }
 
-        Mesh m = new Mesh();
+        ChunkMesh m = new ChunkMesh();
         m.vertices = BufferUtils.createFloatBuffer(vertices.size() * 3);
         vertices.forEach((v)->{
             m.vertices.put(v.x);
@@ -71,6 +63,7 @@ public class ChunkMesher {
         m.indices.flip();
 
         m.indicesCount = indices.size();
+        m.pos = chunk.getPosition();
 
         return m;
     }

@@ -33,11 +33,10 @@ public class ChunkMeshBuffer {
     //TODO error spotting (offsets)
     //TODO split the chunks into a muliple buffers if needed
 
-    public void setToChunk(int nr, Chunk chunk){
+    public void setToChunk(int nr, ChunkMesh mcd){
         assert(nr < indexCounts.length);
 
         long time = System.nanoTime();
-        ChunkMesher.Mesh mcd = ChunkMesher.createMesh(chunk, 1);
 
         indexCounts[nr] = mcd.indicesCount;
         GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, vboId);

@@ -39,8 +39,8 @@ public class Camera {
 
     public Matrix4f getViewMatrix(){
         camera.identity();
+        camera.perspective((float)Math.toRadians(fov), aspect, 0.01f, 100000.0f);
         camera.rotate(rotation);
-        camera.translate(new Vector3f(position).negate());
         return camera;
     }
 
