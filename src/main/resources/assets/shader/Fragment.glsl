@@ -13,7 +13,6 @@ in GS_OUT{
 layout(binding = 0) uniform sampler2D grass;
 layout(binding = 1) uniform sampler2D grass_normal;
 layout(binding = 2) uniform sampler2D glow;
-layout(binding = 3) uniform sampler2D sky;
 
 uniform vec3 pos;
 
@@ -23,7 +22,7 @@ uniform float lightPower = 1;
 uniform float shineDamper = 1f;
 uniform float reflectivity = 0.25f;
 
-vec4 skycolor(sampler2D sky, sampler2D glow, vec3 lightDir, vec3 tc);
+vec4 skycolor(sampler2D glow, vec3 lightDir, vec3 tc);
 
 void main() {
     vec3 blend_weights = abs(fs_in.normal);
@@ -44,7 +43,7 @@ void main() {
     normal = normalize(tbn * normal);
 
     float diffuselight =  0.9 * clamp(dot(normal, lightDir),0.35,1.0);
-    float diffuselight2 = 0.2 * clamp(dot(normal,-lightDir),0.35,1.0);
+    float diffuselight2 = 0.3 * clamp(dot(normal,-lightDir),0.35,1.0);
 
     float specularLight = reflectivity * pow(max(dot(reflect(lightDir, normal), normalize(fs_in.position - pos)),0),shineDamper);
 
@@ -57,7 +56,7 @@ void main() {
     //specularLight = floor(specularLight * 5) * 0.2;
     pixel = color * diffuselight * lightPower + color * specularLight * lightPower + color * diffuselight2 * (1-lightPower);//vec4(color * light,1);
     if(fog){
-        vec4 skycolor = skycolor(sky, glow, lightDir, normalize(fs_in.position - pos));
+        vec4 skycolor = skycolor(glow, lightDir, normalize(fs_in.position - pos));
         pixel = mix(skycolor, pixel, fs_in.visibility);
     }
 }
