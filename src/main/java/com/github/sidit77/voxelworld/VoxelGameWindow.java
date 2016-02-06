@@ -12,7 +12,10 @@ import com.github.sidit77.voxelworld.system.input.Key;
 import com.github.sidit77.voxelworld.system.input.MouseButton;
 import com.github.sidit77.voxelworld.world.Terrain;
 import org.joml.Vector3f;
-import org.lwjgl.opengl.*;
+import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL12;
+import org.lwjgl.opengl.GL20;
+import org.lwjgl.opengl.GL30;
 
 public class VoxelGameWindow extends GameWindow{
 
@@ -24,12 +27,9 @@ public class VoxelGameWindow extends GameWindow{
 
     private Terrain terrain;
 
-    private GLSLProgram shader;
     private GLSLProgram hudshader;
     private GLSLProgram ppshader;
     private GLSLProgram skyboxShader;
-    private Texture2D colortexture;
-    private Texture2D normaltexture;
     private Texture2D glowtexture;
     private Texture2D moontexture;
     private Texture2D suntexture;
@@ -37,7 +37,6 @@ public class VoxelGameWindow extends GameWindow{
     private CubeMapTexture daytexture;
     private Camera camera;
     private float time;
-    private boolean fog = false;
 
     EmptyTexture2D renderTexture;
     EmptyTexture2D depthTexture;
@@ -76,21 +75,12 @@ public class VoxelGameWindow extends GameWindow{
                 }
             }
             if(key == Key.F9 && action == Action.Press){
-                fog = !fog;
-                shader.bind();
-                shader.setUniform("fog", fog ? 1 : 0);
+                terrain.setFog(!terrain.isFogEnabled());
             }
             if(key == Key.Tab && action == Action.Press){
                 System.out.println(camera.getPosition());
             }
         });
-
-        shader = new GLSLProgram()
-                .attachShaderAndDelete(GLSLShader.fromFile("assets/shader/Vertex.glsl", GL20.GL_VERTEX_SHADER))
-                .attachShaderAndDelete(GLSLShader.fromFile("assets/shader/Fragment.glsl", GL20.GL_FRAGMENT_SHADER))
-                .attachShaderAndDelete(GLSLShader.fromFile("assets/shader/Geometry.glsl", GL32.GL_GEOMETRY_SHADER))
-                .attachShaderAndDelete(GLSLShader.fromFile("assets/shader/SkyColor.glsl", GL20.GL_FRAGMENT_SHADER))
-                .link();
 
         hudshader = new GLSLProgram()
                 .attachShaderAndDelete(GLSLShader.fromFile("assets/shader/HUDVertex.glsl", GL20.GL_VERTEX_SHADER))
@@ -108,8 +98,6 @@ public class VoxelGameWindow extends GameWindow{
                 .attachShaderAndDelete(GLSLShader.fromFile("assets/shader/FullscreenFragment.glsl", GL20.GL_FRAGMENT_SHADER))
                 .link();
 
-        colortexture = Texture2D.fromFile("assets/texture/dirt.png");
-        normaltexture = Texture2D.fromFile("assets/texture/dirt_normal.png");
         glowtexture = Texture2D.fromFile("assets/texture/glow.png");
         glowtexture.setWarpMode(GL12.GL_CLAMP_TO_EDGE);
         moontexture = Texture2D.fromFile("assets/texture/moon.png");
@@ -197,34 +185,24 @@ public class VoxelGameWindow extends GameWindow{
             framebuffer.bind();
             GL11.glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT);
 
-
+            GL11.glDisable(GL11.GL_DEPTH_TEST);
+            GL11.glEnable(GL11.GL_BLEND);
+            GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+            glowtexture.bind(0);
+            moontexture.bind(1);
+            suntexture.bind(2);
+            nighttexture.bind(3);
+            daytexture.bind(4);
+            skyboxShader.bind();
+            skyboxShader.setUniform("view_matrix", false, camera.getViewMatrix());
+            skyboxShader.setUniform("lightDir", lightDir);
+            skyboxShader.setUniform("darkness", darkness);
+            GL11.glDrawArrays(GL11.GL_TRIANGLES, 0, 48);
+            GL11.glDisable(GL11.GL_BLEND);
+            GL11.glEnable(GL11.GL_DEPTH_TEST);
         }
-        GL11.glDisable(GL11.GL_DEPTH_TEST);
-        GL11.glEnable(GL11.GL_BLEND);
-        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
-        glowtexture.bind(0);
-        moontexture.bind(1);
-        suntexture.bind(2);
-        nighttexture.bind(3);
-        daytexture.bind(4);
-        skyboxShader.bind();
-        skyboxShader.setUniform("view_matrix", false, camera.getViewMatrix());
-        skyboxShader.setUniform("lightDir", lightDir);
-        skyboxShader.setUniform("darkness", darkness);
-        GL11.glDrawArrays(GL11.GL_TRIANGLES, 0, 48);
-        GL11.glDisable(GL11.GL_BLEND);
-        GL11.glEnable(GL11.GL_DEPTH_TEST);
 
-        shader.bind();
-        colortexture.bind(0);
-        normaltexture.bind(1);
-        glowtexture.bind(2);
-        shader.setUniform("mvp", false, camera.getCameraMatrix());
-        shader.setUniform("pos", camera.getPosition());
-        shader.setUniform("lightDir", lightDir);
-        shader.setUniform("lightPower", darkness);
-
-        terrain.render();
+        terrain.render(camera, lightDir, darkness, glowtexture);
 
         framebuffer.unbind();
 
@@ -248,11 +226,8 @@ public class VoxelGameWindow extends GameWindow{
 
         GL30.glDeleteVertexArrays(emptyvao);
 
-        shader.delete();
         hudshader.delete();
         ppshader.delete();
-        colortexture.delete();
-        normaltexture.delete();
         glowtexture.delete();
         skyboxShader.delete();
         moontexture.delete();

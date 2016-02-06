@@ -1,64 +1,73 @@
 package com.github.sidit77.voxelworld.world;
 
-import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.*;
 
+import java.util.ArrayList;
+
 public class ChunkMeshBuffer {
-
-
-    private static final int chunkmeshvertexnr = (Chunk.size + 1) * (Chunk.size + 1) * (Chunk.size + 1) / 5;
-    private static final int chunkmeshvertexsize = chunkmeshvertexnr * 3 * 5;
-    private static final int chunkmeshindexsize = Chunk.size * Chunk.size * Chunk.size * 5;
 
     private int vaoId;
     private int vboId;
     private int iboId;
-    private int[] indexCounts;
 
-    public ChunkMeshBuffer(int numberofslots){
-        indexCounts = new int[numberofslots];
+    private ArrayList<ChunkBufferIndex> bufferIndices;
+
+    private static final int maxvsize = 2000000;
+    private static final int maxisize = 4000000;
+
+    private int vsize = 0;
+    private int isize = 0;
+
+    public ChunkMeshBuffer(){
+
+        bufferIndices = new ArrayList<>();
+
         vaoId = GL30.glGenVertexArrays();
         vboId = GL15.glGenBuffers();
         iboId = GL15.glGenBuffers();
         GL30.glBindVertexArray(vaoId);
-        GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, vboId);
-        GL15.glBufferData(GL15.GL_ARRAY_BUFFER, BufferUtils.createFloatBuffer(chunkmeshvertexsize * indexCounts.length), GL15.GL_DYNAMIC_DRAW);
-        GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, iboId);
-        GL15.glBufferData(GL15.GL_ELEMENT_ARRAY_BUFFER, BufferUtils.createIntBuffer(chunkmeshindexsize * indexCounts.length), GL15.GL_DYNAMIC_DRAW);
+        clear();
         GL20.glEnableVertexAttribArray(0);
         GL20.glVertexAttribPointer(0, 3, GL11.GL_FLOAT, false, 3 * 4, 0);
         GL30.glBindVertexArray(0);
+
     }
 
-    //TODO error spotting (offsets)
-    //TODO split the chunks into a muliple buffers if needed
-
-    public void setToChunk(int nr, ChunkMesh mcd){
-        assert(nr < indexCounts.length);
-
-        long time = System.nanoTime();
-
-        indexCounts[nr] = mcd.indicesCount;
+    public void clear(){
+        bufferIndices.clear();
+        vsize = 0;
+        isize = 0;
         GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, vboId);
-        GL15.glBufferSubData(GL15.GL_ARRAY_BUFFER, chunkmeshvertexsize * nr * Float.BYTES, mcd.vertices);
-
+        GL15.glBufferData(GL15.GL_ARRAY_BUFFER, maxvsize * Float.BYTES, GL15.GL_DYNAMIC_DRAW);
         GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, iboId);
-        GL15.glBufferSubData(GL15.GL_ELEMENT_ARRAY_BUFFER, chunkmeshindexsize * nr, mcd.indices);
+        GL15.glBufferData(GL15.GL_ELEMENT_ARRAY_BUFFER, maxisize * Integer.BYTES, GL15.GL_DYNAMIC_DRAW);
+    }
 
-        //System.out.println("Needed " + ((double)(System.nanoTime() - time))/1000000000 + " seconds to create the mesh.");
-        //System.out.println("vertex buffer usage: " + ((float)mcd.vertices.capacity() / chunkmeshvertexsize) * 100 + "%");
-        //System.out.println("index buffer usage: " + ((float)mcd.indices.capacity() / chunkmeshindexsize) * 100 + "%");
+    public void addChunkMesh(ChunkMesh cm){
+        if(vsize + cm.vertices.capacity() >= maxvsize || isize + cm.indices.capacity() >= maxisize){
+            System.out.println("Buffer too small");
+            return;
+        }
+        bufferIndices.add(new ChunkBufferIndex(cm.indicesCount, isize, vsize));
+        GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, iboId);
+        GL15.glBufferSubData(GL15.GL_ELEMENT_ARRAY_BUFFER, isize * Integer.BYTES, cm.indices);
+        isize += cm.indices.capacity();
+        GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, vboId);
+        GL15.glBufferSubData(GL15.GL_ARRAY_BUFFER, vsize * Float.BYTES, cm.vertices);
+        vsize += cm.vertices.capacity();
     }
 
     public void render(){
         GL30.glBindVertexArray(vaoId);
-        for(int i = 0; i < indexCounts.length; i++){
-            GL32.glDrawElementsBaseVertex(GL11.GL_TRIANGLES, indexCounts[i], GL11.GL_UNSIGNED_INT, chunkmeshindexsize * i, chunkmeshvertexsize * i / 3);
-        }
+        bufferIndices.forEach(ChunkBufferIndex::draw);
     }
 
-    public int getMaxNumberOfSlots(){
-        return indexCounts.length;
+    public float getVertexBufferUsage(){
+        return (float)vsize/(float)maxvsize;
+    }
+
+    public float getIndexBufferUsage(){
+        return (float)isize/(float)maxisize;
     }
 
     public void delete(){
@@ -66,4 +75,22 @@ public class ChunkMeshBuffer {
         GL15.glDeleteBuffers(iboId);
         GL30.glDeleteVertexArrays(vaoId);
     }
+
+    private class ChunkBufferIndex{
+        private int offset;
+        private int count;
+        private int basevertex;
+
+        public ChunkBufferIndex(int count, int offset, int basevertex){
+            this.offset = offset;
+            this.count = count;
+            this.basevertex = basevertex / 3;
+        }
+
+        public void draw(){
+            GL32.glDrawElementsBaseVertex(GL11.GL_TRIANGLES, count, GL11.GL_UNSIGNED_INT, offset * Integer.BYTES, basevertex);
+        }
+
+    }
+
 }
