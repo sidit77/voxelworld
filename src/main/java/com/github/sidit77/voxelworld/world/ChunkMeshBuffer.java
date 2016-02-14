@@ -13,7 +13,7 @@ public class ChunkMeshBuffer {
     private ArrayList<ChunkBufferIndex> bufferIndices;
 
     private static final int maxvsize = 2000000;
-    private static final int maxisize = 4000000;
+    private static final int maxisize = 2000000;
 
     private int vsize = 0;
     private int isize = 0;
@@ -28,7 +28,9 @@ public class ChunkMeshBuffer {
         GL30.glBindVertexArray(vaoId);
         clear();
         GL20.glEnableVertexAttribArray(0);
-        GL20.glVertexAttribPointer(0, 3, GL11.GL_FLOAT, false, 3 * 4, 0);
+        GL20.glEnableVertexAttribArray(1);
+        GL20.glVertexAttribPointer(0, 3, GL11.GL_FLOAT, false, 4 * Float.BYTES, 0 * Float.BYTES);
+        GL20.glVertexAttribPointer(1, 1, GL11.GL_FLOAT, false, 4 * Float.BYTES, 3 * Float.BYTES);
         GL30.glBindVertexArray(0);
 
     }
@@ -84,11 +86,11 @@ public class ChunkMeshBuffer {
         public ChunkBufferIndex(int count, int offset, int basevertex){
             this.offset = offset;
             this.count = count;
-            this.basevertex = basevertex / 3;
+            this.basevertex = basevertex / 4;
         }
 
         public void draw(){
-            GL32.glDrawElementsBaseVertex(GL11.GL_TRIANGLES, count, GL11.GL_UNSIGNED_INT, offset * Integer.BYTES, basevertex);
+            GL32.glDrawElementsBaseVertex(GL32.GL_LINES_ADJACENCY, count, GL11.GL_UNSIGNED_INT, offset * Integer.BYTES, basevertex);
         }
 
     }

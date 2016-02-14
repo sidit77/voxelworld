@@ -3,17 +3,14 @@ package com.github.sidit77.voxelworld.world;
 import org.joml.Vector3f;
 import org.lwjgl.BufferUtils;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class ChunkMesher {
 
     public static ChunkMesh createMesh(Chunk chunk, int res){
         List<Integer> indices = new ArrayList<>();
-        List<Vector3f> vertices = new ArrayList<>();
-        Map<Vector3f, Integer> indicesMap = new HashMap<>();
+        List<Vertex> vertices = new ArrayList<>();
+        Map<Vertex, Integer> indicesMap = new HashMap<>();
 
         Vector3f[] p = {new Vector3f(),new Vector3f(),new Vector3f(),new Vector3f(),new Vector3f(),new Vector3f(),new Vector3f(),new Vector3f()};
         int index = 0;
@@ -22,10 +19,10 @@ public class ChunkMesher {
             for(int y = 0; y < Chunk.size; y += res){
                 for(int z = 0; z < Chunk.size; z += res){
                     int corners = 0;
-                    float[] v = new float[8];
+                    int[] v = new int[8];
                     for(int i = 0; i < 8; i++){
                         p[i].set(vertex[i]).mul(res).add(x,y,z);
-                        v[i] = chunk.getDensity((int)p[i].x, (int)p[i].y, (int)p[i].z);
+                        v[i] = chunk.getMaterial((int)p[i].x, (int)p[i].y, (int)p[i].z);
                         p[i].add(chunk.getPosition());
                         corners |= (v[i] > 0 ? 1 : 0) << i;
                     }
@@ -35,14 +32,15 @@ public class ChunkMesher {
 
                     for(int i = 0; i < cases[corners].length; i += 1){
                         int[] edge = edges[cases[corners][i]];
-                        Vector3f m = new Vector3f(p[edge[1]]).lerp(p[edge[0]], 0.75f * 0.5f + 0.25f * (-v[edge[1]]) / (v[edge[0]] - v[edge[1]]));
-                        if(!indicesMap.containsKey(m)) {
-                            indicesMap.put(m, index);
+                        Vector3f pos = new Vector3f(p[edge[1]]).add(p[edge[0]]).div(2);
+                        Vertex vert = new Vertex(pos, v[edge[0]] != 0 ? v[edge[0]] : v[edge[1]]);
+                        if(!indicesMap.containsKey(vert)) {
+                            indicesMap.put(vert, index);
                             indices.add(index);
                             index++;
-                            vertices.add(m);
+                            vertices.add(vert);
                         }else{
-                            indices.add(indicesMap.get(m));
+                            indices.add(indicesMap.get(vert));
                         }
                     }
                 }
@@ -50,11 +48,9 @@ public class ChunkMesher {
         }
 
         ChunkMesh m = new ChunkMesh();
-        m.vertices = BufferUtils.createFloatBuffer(vertices.size() * 3);
+        m.vertices = BufferUtils.createFloatBuffer(vertices.size() * 4);
         vertices.forEach((v)->{
-            m.vertices.put(v.x);
-            m.vertices.put(v.y);
-            m.vertices.put(v.z);
+            m.vertices.put(v.getData());
         });
         m.vertices.flip();
 
@@ -68,6 +64,34 @@ public class ChunkMesher {
         return m;
     }
 
+    private static class Vertex{
+
+        private Vector3f position;
+        private float material;
+
+        public Vertex(Vector3f position, float material) {
+            this.position = position;
+            this.material = material;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            Vertex vertex = (Vertex) o;
+            return Float.compare(vertex.material, material) == 0 &&
+                    Objects.equals(position, vertex.position);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(position, material);
+        }
+
+        public float[] getData(){
+            return new float[]{position.x, position.y, position.z, material};
+        }
+    }
 
     private static final int[][] edges = new int[][]{
             {0,1},

@@ -10,7 +10,7 @@ in vec2 texCoords;
 float LinearizeDepth(vec2 uv){
     float n = 1.0; // camera z near
     float f = 1000.0; // camera z far
-    float z = texture2D(depth, uv).x;
+    float z = texture(depth, uv).x;
     return (2.0 * n) / (f + n - z * (f - n));
 }
 

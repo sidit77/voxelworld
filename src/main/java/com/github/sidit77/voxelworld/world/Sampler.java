@@ -5,26 +5,26 @@ import org.joml.Vector3f;
 
 public class Sampler {
 
-    //private static final HashMap<Vector3f, Float> cache = new HashMap<>();
-
-    public static float sample(Vector3f pos){
+    public static int sample(Vector3f pos){
         //return -(pos.sub(4,4,4).length() - 30);
 
-        float result;
+        Vector3f pos1 = new Vector3f(pos);
+        float result = (float) SimplexNoise.noise(pos1.x/100, pos1.z/100) / 1.5f;
 
-        result = (float) SimplexNoise.noise(pos.x/100, pos.z/100) / 1.5f;
+        pos1.add(new Vector3f((float)SimplexNoise.noise(pos1.x/20, pos1.y/20, pos1.z/20)*8));
 
-        pos.add(new Vector3f((float)SimplexNoise.noise(pos.x/20, pos.y/20, pos.z/20)*8));
+        pos1.add(0,-50,0);
+        pos1.div(100);
+        pos1.div(1, 0.5f, 1);
 
-        pos.add(0,-50,0);
-        pos.div(100);
-        pos.div(1, 0.5f, 1);
+        result -= -pos1.y;
+        result += (float)SimplexNoise.noise(pos1.x*2+5,pos1.y*2+3,pos1.z*2+0.6) * 0.20f;
+        if(pos.x < 60 && pos.x > 40 && pos.y < 120 && pos.y > 100 && pos.z < 60 && pos.z > 40)result = -1;
+        //result *= -1;
 
-        result -= -pos.y;
-        result += (float)SimplexNoise.noise(pos.x*2+5,pos.y*2+3,pos.z*2+0.6) * 0.20f;
-        result *= -1;
-
-        return result;
+        //int material = pos.y > 40 ? 0 : 1;
+        //return new Material(-Math.min(result,), material);//;//;// );
+        return union(union(result < 0 ? 1 : 0, (pos.sub(4,40,4).length() - 30) < 0 ? 2 : 0), (pos.sub(20,0,20).length() - 30) < 0 ? 3 : 0);//Material.union(new Material(-result, 0), new Material(-(pos.sub(4,40,4).length() - 30),1));
 
         //return -pos.y;
 
@@ -37,21 +37,12 @@ public class Sampler {
         //return -pos.y + (float)SimplexNoise.noise(pos.x/20, pos.z/20)*10;
     }
 
-    private static float[][][] cache;
 
-    public static float sample2(Vector3f pos){
-
-        if(cache == null){
-            cache = new float[130][130][130];
-            for(int x = 0; x < cache.length; x++){
-                for(int y = 0; y < cache[0].length; y++){
-                    for(int z = 0; z < cache[0][0].length; z++){
-                        cache[x][y][z] = sample(new Vector3f(x,y,z));
-                    }
-                }
-            }
+    private static int union(int m1, int m2){
+        if(m2 != 0){
+            return m2;
         }
-
-        return cache[(int)pos.x][(int)pos.y][(int)pos.z];
+        return m1;
     }
+
 }

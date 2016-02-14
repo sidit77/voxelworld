@@ -39,14 +39,15 @@ public class Terrain {
                 .link();
 
 
-        colortexture = Texture2D.fromFile("assets/texture/dirt.png");
-        normaltexture = Texture2D.fromFile("assets/texture/dirt_normal.png");
+        colortexture = Texture2D.fromFile("assets/texture/brick.png");
+        normaltexture = Texture2D.fromFile("assets/texture/brick_normal.png");
+        normaltexture.setLODBias(-0.5f);
 
         loadedMeshes = new ArrayList<>();
 
         meshBuffer = new ChunkMeshBuffer();
 
-        chunkManager = new ChunkManager(new Vector3f(0), 5, 5);
+        chunkManager = new ChunkManager(new Vector3f(0), 5);
     }
 
     public void update(Vector3f pos){
@@ -58,8 +59,8 @@ public class Terrain {
             meshBuffer.clear();
             loadedMeshes.forEach((cm) -> meshBuffer.addChunkMesh(cm));
 
-            //System.out.println("Vertex Buffer Usage: " + meshBuffer.getVertexBufferUsage() * 100 + "%");
-            //System.out.println("Index Buffer Usage: " + meshBuffer.getIndexBufferUsage() * 100 + "%");
+            System.out.println("Vertex Buffer Usage: " + meshBuffer.getVertexBufferUsage() * 100 + "%");
+            System.out.println("Index Buffer Usage: " + meshBuffer.getIndexBufferUsage() * 100 + "%");
         }
 
     }

@@ -45,7 +45,11 @@ public class ChunkManager extends Thread{
         neededChunks.forEach((ci)->{
             synchronized (chunks) {
                 if (chunks.containsKey(ci)) {
-                    meshes.add(chunks.get(ci).getMesh());
+                    LoadedChunk lc = chunks.get(ci);
+                    if(lc.isMeshed()){
+                        meshes.add(lc.getMesh());
+                    }
+
                 }
             }
         });
@@ -74,6 +78,12 @@ public class ChunkManager extends Thread{
                 if (!chunks.containsKey(ci)) {
                     chunks.put(ci, new LoadedChunk(new Chunk(ci.getChunkPosition())));
                     loaded++;
+                }
+            });
+
+            chunks.entrySet().parallelStream().forEach(e -> {
+                if(!e.getValue().isMeshed()){
+                    e.getValue().mesh();
                 }
             });
 
@@ -106,10 +116,40 @@ public class ChunkManager extends Thread{
     private class LoadedChunk{
         private Chunk chunk;
         private ChunkMesh mesh;
+        private boolean meshed;
 
         public LoadedChunk(Chunk chunk){
             this.chunk = chunk;
-            this.mesh = ChunkMesher.createMesh(chunk, 1);
+            this.meshed = false;
+        }
+
+        public void mesh(){
+            Chunk[][][] mchunks = new Chunk[3][3][3];
+           // mchunks[0][0][0] = chunk;
+            meshed = true;
+            for(int x = -1; x < 2; x++){
+                for(int y = -1; y < 2; y++){
+                    for(int z = -1; z < 2; z++){
+                        Chunk c;
+                        if(x == 0 && y == 0 && z == 0){
+                            c = chunk;
+                        }else{
+                            LoadedChunk lc = chunks.getOrDefault(new ChunkIndex(chunk.getPosition(), x,y,z),null);
+                            c = lc != null ? lc.getChunk() : null;
+                        }
+                        if(c == null){
+                            meshed = false;
+                        }
+                        mchunks[x+1][y+1][z+1] = c;
+                    }
+                }
+            }
+
+            this.mesh = ChunkMesher2.createMesh(mchunks);
+        }
+
+        public boolean isMeshed(){
+            return meshed && mesh != null;
         }
 
         public Chunk getChunk() {

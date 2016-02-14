@@ -3,6 +3,7 @@ package com.github.sidit77.voxelworld.opengl.texture;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL12;
 import org.lwjgl.opengl.GL13;
+import org.lwjgl.opengl.GL14;
 
 public abstract class Texture {
 
@@ -30,6 +31,11 @@ public abstract class Texture {
         GL11.glTexParameteri(type, GL11.GL_TEXTURE_WRAP_S, mode);
         GL11.glTexParameteri(type, GL11.GL_TEXTURE_WRAP_T, mode);
         GL11.glTexParameteri(type, GL12.GL_TEXTURE_WRAP_R, mode);
+    }
+
+    public void setLODBias(float v){
+        GL11.glBindTexture(type, id);
+        GL11.glTexParameterf(GL11.GL_TEXTURE_2D, GL14.GL_TEXTURE_LOD_BIAS, v);
     }
 
     public void delete(){
