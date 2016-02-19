@@ -12,8 +12,8 @@ public class ChunkMeshBuffer {
 
     private ArrayList<ChunkBufferIndex> bufferIndices;
 
-    private static final int maxvsize = 2000000;
-    private static final int maxisize = 2000000;
+    private static final int maxvsize = 20000000;
+    private static final int maxisize = 20000000;
 
     private int vsize = 0;
     private int isize = 0;

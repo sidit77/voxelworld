@@ -126,7 +126,7 @@ public class VoxelGameWindow extends GameWindow{
         framebuffer.unbind();
 
         camera = new Camera(75, (float)getWidth()/(float)getHeight());
-        camera.setPosition(60, 80, 60);
+        camera.setPosition(0, 80, 0);
         //camera.setPosition(5, 5, 15);
 
 

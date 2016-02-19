@@ -10,8 +10,8 @@ in GS_OUT{
     flat int material;
 } fs_in;
 
-layout(binding = 0) uniform sampler2D grass;
-layout(binding = 1) uniform sampler2D grass_normal;
+layout(binding = 0) uniform sampler2DArray colorTex;
+layout(binding = 1) uniform sampler2DArray normalTex;
 layout(binding = 2) uniform sampler2D glow;
 
 uniform vec3 pos;
@@ -26,7 +26,7 @@ vec4 skycolor(sampler2D glow, vec3 lightDir, vec3 tc);
 
 void main() {
 
-    vec3 normal = (2*texture(grass_normal, fs_in.uv).xyz)-1;
+    vec3 normal = (2*texture(normalTex, vec3(fs_in.uv, float(fs_in.material-1))).xyz)-1;
     normal = normalize(fs_in.tbn * normal);//vec3(0,0,1)
 
     float diffuselight =  0.9 * clamp(dot(normal, lightDir),0.35,1.0);
@@ -39,9 +39,7 @@ void main() {
     //vec4 color = blended_color;//vec4(0.25,0.6,0.25,1)
     //color.b = mix(color.b, 1, fs_in.material- 1);
 
-    vec4[] matcolor = vec4[](vec4(1,0,0,1),vec4(0,0,1,1), vec4(0,1,0,1));
-    vec4 color = matcolor[fs_in.material - 1];
-    color = mix(color, texture(grass, fs_in.uv), 0.9);
+    vec4 color = texture(colorTex, vec3(fs_in.uv, float(fs_in.material-1)));
 
     //color = floor(color * 5) * 0.2;
     //light = floor(light * 5) * 0.2;

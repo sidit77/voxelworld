@@ -145,7 +145,7 @@ public class ChunkManager extends Thread{
                 }
             }
 
-            this.mesh = ChunkMesher2.createMesh(mchunks);
+            this.mesh = ChunkMesher.createMesh(mchunks);
         }
 
         public boolean isMeshed(){
