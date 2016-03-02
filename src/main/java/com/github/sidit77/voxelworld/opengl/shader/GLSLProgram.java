@@ -6,6 +6,7 @@ import org.joml.Vector3f;
 import org.joml.Vector4f;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL20;
+import org.lwjgl.opengl.GL31;
 
 import java.nio.FloatBuffer;
 import java.util.HashMap;
@@ -75,6 +76,21 @@ public class GLSLProgram {
             uniforms.put(name, GL20.glGetUniformLocation(id, name));
         }
         return uniforms.get(name);
+    }
+
+    public int getUniformBlock(String name){
+        if(!uniforms.containsKey("ub_" + name)) {
+            uniforms.put("ub_" + name, GL31.glGetUniformBlockIndex(id, name));
+        }
+        return uniforms.get("ub_" + name);
+    }
+
+    public void bindUniformBlock(String name, int slot){
+        GL31.glUniformBlockBinding(id, getUniformBlock(name), slot);
+    }
+
+    public void bindUniformBlock(int location, int slot){
+        GL31.glUniformBlockBinding(id, location, slot);
     }
 
     public void setUniform(int location, int value) {
