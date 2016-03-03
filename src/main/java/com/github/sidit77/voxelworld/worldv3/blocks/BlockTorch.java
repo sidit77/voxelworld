@@ -74,11 +74,26 @@ public class BlockTorch extends Block {
     }
 
     @Override
-    public void addToChunkMesh(ChunkMesh mesh, int x, int y, int z, Block[] neightbors) {
+    public boolean isOpaque() {
+        return false;
+    }
+
+    @Override
+    public boolean isLightSource() {
+        return true;
+    }
+
+    @Override
+    public int getLightLevel() {
+        return 15;
+    }
+
+    @Override
+    public void addToChunkMesh(ChunkMesh mesh, int x, int y, int z, Block[] neightbors, int[] lightlevels) {
         for(int[][] face : faces){
-            mesh.addTriangle(new Vertex(new Vector3f(x,y,z).add(vertex[face[0][0]]), tex[face[0][1]], 7),
-                             new Vertex(new Vector3f(x,y,z).add(vertex[face[1][0]]), tex[face[1][1]], 7),
-                             new Vertex(new Vector3f(x,y,z).add(vertex[face[2][0]]), tex[face[2][1]], 7));
+            mesh.addTriangle(new Vertex(new Vector3f(x,y,z).add(vertex[face[0][0]]), tex[face[0][1]], 7, getLightLevel()),
+                             new Vertex(new Vector3f(x,y,z).add(vertex[face[1][0]]), tex[face[1][1]], 7, getLightLevel()),
+                             new Vertex(new Vector3f(x,y,z).add(vertex[face[2][0]]), tex[face[2][1]], 7, getLightLevel()));
 
         }
 

@@ -9,21 +9,18 @@ import java.util.Objects;
 
 public class Vertex {
 
-    public static final int size = 6;
+    public static final int size = 7;
 
     private Vector3f position;
     private Vector2f tc;
     private int textureid;
+    private float lightlevel;
 
-    public Vertex(Vertex base, Vector3f newPos){
-        this(newPos, base.tc, base.textureid);
-        this.getPosition().add(base.getPosition());
-    }
-
-    public Vertex(Vector3f position, Vector2f tc, int textureid){
+    public Vertex(Vector3f position, Vector2f tc, int textureid, int lightlevel){
         this.position = position;
         this.tc = tc;
         this.textureid = textureid;
+        this.lightlevel = (float)lightlevel/15;
     }
 
     public Vector3f getPosition() {
@@ -38,8 +35,16 @@ public class Vertex {
         return textureid;
     }
 
+    public float getLightLevel() {
+        return lightlevel;
+    }
+
+    public void setLightlevel(float lightlevel) {
+        this.lightlevel = lightlevel;
+    }
+
     public float[] getElements(){
-        return new float[]{position.x,position.y,position.z,tc.x,tc.y,(float)textureid};
+        return new float[]{position.x,position.y,position.z,tc.x,tc.y,(float)textureid,lightlevel};
     }
 
     public static FloatBuffer store(Vertex[] vertices, FloatBuffer dest){
@@ -60,12 +65,13 @@ public class Vertex {
         if (o == null || getClass() != o.getClass()) return false;
         Vertex vertex = (Vertex) o;
         return textureid == vertex.textureid &&
+                Float.compare(vertex.lightlevel, lightlevel) == 0 &&
                 Objects.equals(position, vertex.position) &&
                 Objects.equals(tc, vertex.tc);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(position, tc, textureid);
+        return Objects.hash(position, tc, textureid, lightlevel);
     }
 }

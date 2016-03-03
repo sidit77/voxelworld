@@ -32,9 +32,11 @@ public class ChunkMeshBuffer {
         GL20.glEnableVertexAttribArray(0);
         GL20.glEnableVertexAttribArray(1);
         GL20.glEnableVertexAttribArray(2);
+        GL20.glEnableVertexAttribArray(3);
         GL20.glVertexAttribPointer(0, 3, GL11.GL_FLOAT, false, Vertex.size * Float.BYTES, 0 * Float.BYTES);
         GL20.glVertexAttribPointer(1, 2, GL11.GL_FLOAT, false, Vertex.size * Float.BYTES, 3 * Float.BYTES);
         GL20.glVertexAttribPointer(2, 1, GL11.GL_FLOAT, false, Vertex.size * Float.BYTES, 5 * Float.BYTES);
+        GL20.glVertexAttribPointer(3, 1, GL11.GL_FLOAT, false, Vertex.size * Float.BYTES, 6 * Float.BYTES);
         //GL20.glVertexAttribPointer(1, 1, GL11.GL_FLOAT, false, 4 * Float.BYTES, 3 * Float.BYTES);
         GL30.glBindVertexArray(0);
 

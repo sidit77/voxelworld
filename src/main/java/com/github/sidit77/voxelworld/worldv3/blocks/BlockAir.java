@@ -16,7 +16,7 @@ public class BlockAir extends Block {
     }
 
     @Override
-    public void addToChunkMesh(ChunkMesh mesh, int x, int y, int z, Block[] neightbors) {
+    public void addToChunkMesh(ChunkMesh mesh, int x, int y, int z, Block[] neightbors, int[] lightlevels) {
 
     }
 
@@ -25,4 +25,8 @@ public class BlockAir extends Block {
         return false;
     }
 
+    @Override
+    public boolean isOpaque() {
+        return false;
+    }
 }

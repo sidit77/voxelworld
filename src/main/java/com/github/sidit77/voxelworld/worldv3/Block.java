@@ -24,18 +24,30 @@ public abstract class Block {
         return true;
     }
 
+    public boolean isOpaque(){
+        return true;
+    }
+
+    public boolean isLightSource(){
+        return false;
+    }
+
+    public int getLightLevel(){
+        return 15;
+    }
+
     public void setTexture(Direction d, int id){
         textureids[d.getID()] = id;
     }
 
-    public void addToChunkMesh(ChunkMesh mesh, int x, int y, int z, Block[] neightbors){
+    public void addToChunkMesh(ChunkMesh mesh, int x, int y, int z, Block[] neightbors, int[] lightslevels){
         for(Direction dir : Direction.values()){
             if(neightbors[dir.getID()] == null || !neightbors[dir.getID()].isSolid(Direction.getOpposite(dir))){
                 mesh.addQuad(
-                        new Vertex(new Vector3f(x,y,z).add(vertex[faces[dir.getID()][0]]), new Vector2f(1,1), textureids[dir.getID()]),
-                        new Vertex(new Vector3f(x,y,z).add(vertex[faces[dir.getID()][1]]), new Vector2f(0,1), textureids[dir.getID()]),
-                        new Vertex(new Vector3f(x,y,z).add(vertex[faces[dir.getID()][2]]), new Vector2f(0,0), textureids[dir.getID()]),
-                        new Vertex(new Vector3f(x,y,z).add(vertex[faces[dir.getID()][3]]), new Vector2f(1,0), textureids[dir.getID()]));
+                        new Vertex(new Vector3f(x,y,z).add(vertex[faces[dir.getID()][0]]), new Vector2f(1,1), textureids[dir.getID()], lightslevels[dir.getID()]),
+                        new Vertex(new Vector3f(x,y,z).add(vertex[faces[dir.getID()][1]]), new Vector2f(0,1), textureids[dir.getID()], lightslevels[dir.getID()]),
+                        new Vertex(new Vector3f(x,y,z).add(vertex[faces[dir.getID()][2]]), new Vector2f(0,0), textureids[dir.getID()], lightslevels[dir.getID()]),
+                        new Vertex(new Vector3f(x,y,z).add(vertex[faces[dir.getID()][3]]), new Vector2f(1,0), textureids[dir.getID()], lightslevels[dir.getID()]));
             }
         }
     }

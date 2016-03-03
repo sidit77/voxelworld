@@ -13,15 +13,10 @@ public class EmptyTexture2D extends Texture {
         this(width, height, GL11.GL_RGBA);
     }
 
-    public EmptyTexture2D(int width, int height, int mode){
-        this(width, height, true, mode);
-    }
-
-    public EmptyTexture2D(int width, int height, boolean linear, int mode) {
+    public EmptyTexture2D(int width, int height, int mode) {
         super(GL11.GL_TEXTURE_2D);
         this.mode = mode;
-        GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, linear ? GL11.GL_LINEAR : GL11.GL_NEAREST);
-        GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, linear ? GL11.GL_LINEAR : GL11.GL_NEAREST);
+        setFiltering(GL11.GL_LINEAR, GL11.GL_LINEAR);
         GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_S, GL12.GL_CLAMP_TO_EDGE);
         GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_T, GL12.GL_CLAMP_TO_EDGE);
         //GL11.glTexParameterf(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_LOD_BIAS, -1);

@@ -17,6 +17,7 @@ import com.github.sidit77.voxelworld.worldv3.Block;
 import com.github.sidit77.voxelworld.worldv3.Terrain;
 import com.github.sidit77.voxelworld.worldv3.blocks.Blocks;
 import javafx.scene.paint.Color;
+import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.lwjgl.opengl.*;
 
@@ -57,12 +58,17 @@ public class VoxelGameWindow extends GameWindow{
     private Camera camera;
     private float time;
 
-    EmptyTexture2D renderTexture;
-    EmptyTexture2D depthTexture;
-    FrameBuffer framebuffer;
+    private EmptyTexture2D renderTexture;
+    private EmptyTexture2D depthTexture;
+    private FrameBuffer framebuffer;
+
+    private FrameBuffer shadowmap;
+    private EmptyTexture2D shadowtex;
 
     private boolean physics = false;
     private boolean thirdperson = false;
+    private boolean debug = false;
+    private int fps;
 
     @Override
     public void load() {
@@ -107,6 +113,9 @@ public class VoxelGameWindow extends GameWindow{
             }
             if(key == Key.F7 && action == Action.Press){
                 thirdperson = !thirdperson;
+            }
+            if(key == Key.F6 && action == Action.Press){
+                debug = !debug;
             }
             if(key == Key.Tab && action == Action.Press){
                 System.out.println(camera.getPosition());
@@ -188,6 +197,15 @@ public class VoxelGameWindow extends GameWindow{
         if(!framebuffer.isOK())System.out.println("ERROR");
         framebuffer.unbind();
 
+        shadowtex = new EmptyTexture2D(2048, 2048, GL11.GL_DEPTH_COMPONENT);
+        //shadowtex.setFiltering(GL11.GL_NEAREST, GL11.GL_NEAREST);
+        shadowtex.setWarpMode(GL13.GL_CLAMP_TO_BORDER);
+        shadowmap = new FrameBuffer().attachTexture(shadowtex, GL30.GL_DEPTH_ATTACHMENT);
+        GL11.glDrawBuffer(GL11.GL_NONE);
+        GL11.glReadBuffer(GL11.GL_NONE);
+        if(!shadowmap.isOK())System.out.println("ERROR");
+        shadowmap.unbind();
+
         camera = new Camera(75, (float)getWidth()/(float)getHeight());
         camera.setPosition(0, 80, 0);
         //camera.setPosition(5, 5, 15);
@@ -207,7 +225,8 @@ public class VoxelGameWindow extends GameWindow{
 
     @Override
     public void update(double time) {
-        setTitle("Voxel Game FPS: " + Math.round(1/time) + " | Physic: " + physics + " | Third Person: " + thirdperson);
+
+        if(debug) fps = (int)Math.round(1/time);
 
         if(!physics) {
             float speed = 10 * (float)time * (!getKeyboard().isKeyDown(Key.LeftControl) ? 1 : 4);
@@ -322,6 +341,22 @@ public class VoxelGameWindow extends GameWindow{
         Vector3f lightDir = new Vector3f((float) Math.cos(time / 20), (float) Math.sin(time / 20), (float) Math.sin(time / 20) * 0.5f);
         float darkness = (float) Math.max(0, Math.min(lightDir.y + 0.5, 1));
 
+        GL11.glViewport(0,0,2048,2048);
+        //GL11.glCullFace(GL11.GL_FRONT);
+        shadowmap.bind();
+        GL11.glClear(GL11.GL_DEPTH_BUFFER_BIT);
+        Matrix4f lightMatrix = new Matrix4f();
+        lightMatrix.ortho(-40.0f, 40.0f, -40.0f, 40.0f, 1, 60);
+        lightMatrix.lookAt(new Vector3f(lightDir).normalize().mul(40).add(playerpos), new Vector3f(playerpos), new Vector3f(0,1,0));
+        terrain.render(lightMatrix);
+        playershader.bind();
+        playershader.setUniform("mvp", false, lightMatrix);
+        playershader.setUniform("pos", playerpos);
+        GL11.glDrawArrays(GL11.GL_TRIANGLES, 0, 36);
+        shadowmap.unbind();
+        //GL11.glCullFace(GL11.GL_BACK);
+
+        GL11.glViewport(0,0,getWidth(),getHeight());
         if (GL11.glIsEnabled(GL11.GL_CULL_FACE)) {
             framebuffer.bind();
             GL11.glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT);
@@ -343,12 +378,14 @@ public class VoxelGameWindow extends GameWindow{
             GL11.glEnable(GL11.GL_DEPTH_TEST);
         }
 
-        terrain.render(camera);
+        terrain.render(camera, darkness, lightDir, shadowtex, lightMatrix);
 
-        playershader.bind();
-        playershader.setUniform("mvp", false, camera.getCameraMatrix());
-        playershader.setUniform("pos", playerpos);
-        GL11.glDrawArrays(GL11.GL_TRIANGLES, 0, 36);
+        if(thirdperson) {
+            playershader.bind();
+            playershader.setUniform("mvp", false, camera.getCameraMatrix());
+            playershader.setUniform("pos", playerpos);
+            GL11.glDrawArrays(GL11.GL_TRIANGLES, 0, 36);
+        }
 
         if (targetBlock != null){
             GL30.glBindVertexArray(emptyvao);
@@ -383,7 +420,25 @@ public class VoxelGameWindow extends GameWindow{
             GL11.glDrawArrays(GL11.GL_POINTS, 0, 1);
 
             text.render(inventory[inventorySlot].getName(), 20, 10, 0.7f, Color.WHITE, 0.75f);
-            text.render("F1: Keybindigs", 20, getHeight() - 40, 0.4f, Color.WHITE, 0.75f);
+            text.render("F1: Keybindings", 20, getHeight() - 40, 0.4f, Color.WHITE, 0.75f);
+
+            if(debug) {
+                float size = 0.4f;
+                Text[] lines = {
+                        text.getText("Pos: [" + ((float)Math.round(playerpos.x*10)/10) + "," + ((float)Math.round(playerpos.y*10)/10) + "," + ((float)Math.round(playerpos.z*10)/10) + "]", size),
+                        text.getText("Camera: " +  (thirdperson ? "Third" : "First")+"person", size),
+                        text.getText("Physics: " +  physics, size),
+                        text.getText("Lightlevel: " + (faceBlock != null ? terrain.getLightLevel(faceBlock) : "-"), size),
+                        text.getText("FPS: " +  fps, size)
+                };
+
+                float height = 10;
+                for(Text line : lines){
+                    text.render(line, getWidth() - 20 - line.getSize(), height , Color.WHITE, 0.75f);
+                    height += 30;
+                }
+            }
+
         }else{
             float size = 0.7f;
             Text[] lines = {
@@ -392,7 +447,7 @@ public class VoxelGameWindow extends GameWindow{
                     text.getText("Left/Right: Destroy/Place a block", size),
                     text.getText("Scroll: Change block", size),
                     text.getText("Middle: Pick block from the world", size),
-                    text.getText("F7/F8/F10: Toggle camera/physics/wireframe", size),
+                    text.getText("F6/F7/F8/F10: Toggle debug/camera/physics/wireframe", size),
                     text.getText("Escape: Exit", size)
             };
 
@@ -430,11 +485,14 @@ public class VoxelGameWindow extends GameWindow{
         renderTexture.delete();
         depthTexture.delete();
         framebuffer.delete();
+
+        shadowmap.delete();
+        shadowtex.delete();
+
     }
 
     @Override
     public void resize(int width, int height) {
-        GL11.glViewport(0, 0, width, height);
         camera.setAspect((float)width/(float)height);
         renderTexture.resize(width, height);
         depthTexture.resize(width, height);
