@@ -4,6 +4,7 @@ import com.github.sidit77.voxelworld.gui.text.Font;
 import com.github.sidit77.voxelworld.gui.text.Text;
 import com.github.sidit77.voxelworld.gui.text.TextRenderer;
 import com.github.sidit77.voxelworld.opengl.framebuffer.FrameBuffer;
+import com.github.sidit77.voxelworld.opengl.framebuffer.RenderBuffer;
 import com.github.sidit77.voxelworld.opengl.shader.GLSLProgram;
 import com.github.sidit77.voxelworld.opengl.shader.GLSLShader;
 import com.github.sidit77.voxelworld.opengl.texture.CubeMapTexture;
@@ -22,6 +23,10 @@ import org.joml.Vector3f;
 import org.lwjgl.opengl.*;
 
 public class VoxelGameWindow extends GameWindow{
+
+    private static final int shadowres = 2048;
+    private static final int shadowarea = 60;
+    private static final int shadowdistance = 80;
 
     public VoxelGameWindow(boolean fullscreen, boolean playmode) {
         super("Voxel Game", fullscreen ? -1 : 1280, fullscreen ? -1 : 720, fullscreen, 4, 0);
@@ -48,6 +53,7 @@ public class VoxelGameWindow extends GameWindow{
     private GLSLProgram skyboxShader;
     private GLSLProgram pickingshader;
     private GLSLProgram playershader;
+    private GLSLProgram playershadowshader;
     private Texture2D glowtexture;
     private Texture2D moontexture;
     private Texture2D suntexture;
@@ -64,6 +70,7 @@ public class VoxelGameWindow extends GameWindow{
 
     private FrameBuffer shadowmap;
     private EmptyTexture2D shadowtex;
+    private RenderBuffer shadowdepth;
 
     private boolean physics = false;
     private boolean thirdperson = false;
@@ -169,6 +176,11 @@ public class VoxelGameWindow extends GameWindow{
                 .attachShaderAndDelete(GLSLShader.fromFile("assets/shader/PlayerFragment.glsl", GL20.GL_FRAGMENT_SHADER))
                 .link();
 
+        playershadowshader = new GLSLProgram()
+                .attachShaderAndDelete(GLSLShader.fromFile("assets/shader/PlayerVertex.glsl", GL20.GL_VERTEX_SHADER))
+                .attachShaderAndDelete(GLSLShader.fromFile("assets/shader/worldv3/shadow/Fragment.glsl", GL20.GL_FRAGMENT_SHADER))
+                .link();
+
         fonttexture = Texture2D.fromFile("assets/texture/font/ComicSans.png");
         glowtexture = Texture2D.fromFile("assets/texture/glow.png");
         glowtexture.setWarpMode(GL12.GL_CLAMP_TO_EDGE);
@@ -197,12 +209,11 @@ public class VoxelGameWindow extends GameWindow{
         if(!framebuffer.isOK())System.out.println("ERROR");
         framebuffer.unbind();
 
-        shadowtex = new EmptyTexture2D(2048, 2048, GL11.GL_DEPTH_COMPONENT);
+        shadowtex = new EmptyTexture2D(shadowres, shadowres, GL30.GL_RG, GL30.GL_RG32F);
+        shadowdepth = new RenderBuffer(shadowres, shadowres, GL11.GL_DEPTH_COMPONENT);
         //shadowtex.setFiltering(GL11.GL_NEAREST, GL11.GL_NEAREST);
         shadowtex.setWarpMode(GL13.GL_CLAMP_TO_BORDER);
-        shadowmap = new FrameBuffer().attachTexture(shadowtex, GL30.GL_DEPTH_ATTACHMENT);
-        GL11.glDrawBuffer(GL11.GL_NONE);
-        GL11.glReadBuffer(GL11.GL_NONE);
+        shadowmap = new FrameBuffer().attachTexture(shadowtex, GL30.GL_COLOR_ATTACHMENT0).attachRenderBuffer(shadowdepth, GL30.GL_DEPTH_ATTACHMENT);
         if(!shadowmap.isOK())System.out.println("ERROR");
         shadowmap.unbind();
 
@@ -341,17 +352,18 @@ public class VoxelGameWindow extends GameWindow{
         Vector3f lightDir = new Vector3f((float) Math.cos(time / 20), (float) Math.sin(time / 20), (float) Math.sin(time / 20) * 0.5f);
         float darkness = (float) Math.max(0, Math.min(lightDir.y + 0.5, 1));
 
-        GL11.glViewport(0,0,2048,2048);
+        GL11.glViewport(0,0,shadowres,shadowres);
         //GL11.glCullFace(GL11.GL_FRONT);
         shadowmap.bind();
-        GL11.glClear(GL11.GL_DEPTH_BUFFER_BIT);
+        GL11.glClearColor(1,1,0,1);
+        GL11.glClear(GL11.GL_DEPTH_BUFFER_BIT | GL11.GL_COLOR_BUFFER_BIT);
         Matrix4f lightMatrix = new Matrix4f();
-        lightMatrix.ortho(-40.0f, 40.0f, -40.0f, 40.0f, 1, 60);
-        lightMatrix.lookAt(new Vector3f(lightDir).normalize().mul(40).add(playerpos), new Vector3f(playerpos), new Vector3f(0,1,0));
+        lightMatrix.ortho(-(shadowarea/2), (shadowarea/2), -(shadowarea/2), (shadowarea/2), 1, shadowdistance);
+        lightMatrix.lookAt(new Vector3f(lightDir).normalize().mul(0.6f * shadowdistance).add(playerpos), new Vector3f(playerpos), new Vector3f(0,1,0));
         terrain.render(lightMatrix);
-        playershader.bind();
-        playershader.setUniform("mvp", false, lightMatrix);
-        playershader.setUniform("pos", playerpos);
+        playershadowshader.bind();
+        playershadowshader.setUniform("mvp", false, lightMatrix);
+        playershadowshader.setUniform("pos", playerpos);
         GL11.glDrawArrays(GL11.GL_TRIANGLES, 0, 36);
         shadowmap.unbind();
         //GL11.glCullFace(GL11.GL_BACK);
@@ -479,6 +491,7 @@ public class VoxelGameWindow extends GameWindow{
         daytexture.delete();
         pickingshader.delete();
         playershader.delete();
+        playershadowshader.delete();
         fonttexture.delete();
         text.delete();
 
@@ -488,7 +501,7 @@ public class VoxelGameWindow extends GameWindow{
 
         shadowmap.delete();
         shadowtex.delete();
-
+        shadowdepth.delete();
     }
 
     @Override
