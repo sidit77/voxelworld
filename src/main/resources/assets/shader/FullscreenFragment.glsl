@@ -3,15 +3,15 @@
 out vec4 color;
 
 layout(binding = 0) uniform sampler2D image;
-layout(binding = 1) uniform sampler2D depth;
+layout(binding = 1) uniform sampler2D blur;
+layout(binding = 2) uniform sampler2D depth;
+layout(binding = 3) uniform sampler2D godrays;
 
 in vec2 texCoords;
 
-uniform vec2 screen;
-
 float LinearizeDepth(vec2 uv){
     float n = 1.0; // camera z near
-    float f = 1000.0; // camera z far
+    float f = 100.0; // camera z far
     float z = texture(depth, uv).x;
     return (2.0 * n) / (f + n - z * (f - n));
 }
@@ -31,6 +31,10 @@ void main() {
     //color.w = 1;
     //color = mix(texture(image,texCoords), blur9(image, texCoords, vec2(1280, 720), vec2(2)), abs(LinearizeDepth(texCoords)-LinearizeDepth(vec2(0.5,0.5)))*1.3);
 
+    color = mix(texture(image, texCoords), texture(blur, texCoords), clamp(abs(LinearizeDepth(vec2(0.5,0.5))-LinearizeDepth(texCoords))*5,0, 1));
+    //color = mix(texture(image, texCoords), texture(blur, texCoords), clamp(length((texCoords-0.5f)*2),0,1));
 
-    color = vec4(saturation(texture(image,texCoords).xyz, 2),1)*(1.2-length(texCoords-0.5f));
+    color += texture(godrays, texCoords)* 0.75;
+
+    color = vec4(saturation(color.xyz, 1.5f),color.w)*(1.2-length(texCoords-0.5f));
 }

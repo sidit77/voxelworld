@@ -1,6 +1,7 @@
 #version 420 core
 
-out vec4 color;
+layout (location = 0) out vec4 color0;
+layout (location = 1) out vec4 color1;
 
 vec2 poissonDisk[16] = vec2[](
    vec2( -0.94201624, -0.39906216 ),
@@ -75,6 +76,8 @@ void main() {
     shadow = clamp(shadow, 0.0, 1.0);
 
     float sunlight = shadow * darkness * max(0.5, dot(normalize(fs_in.normal), normalize(lightDir)));//darkness *
-    color = texture(colortexture, vec3(fs_in.uv, float(fs_in.material))) * max(max(fs_in.lightlevel, sunlight),0.1);//dot(fs_in.normal, normalize(vec3(0.5,1,1)))
+    color0 = texture(colortexture, vec3(fs_in.uv, float(fs_in.material))) * max(max(fs_in.lightlevel, sunlight),0.1);//dot(fs_in.normal, normalize(vec3(0.5,1,1)))
+
+    color1 = vec4(0,0,0,1);
     //color = vec4((fs_in.normal + 1)/2, 1);
 }
