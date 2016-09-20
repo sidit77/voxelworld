@@ -5,19 +5,15 @@ layout(triangle_strip, max_vertices = 3) out;
 
 in VS_OUT{
     vec3 position;
-    vec2 uv;
-    float lightlevel;
     vec4 lightpos;
-    flat int material;
+    vec2 uv;
 } gs_in[3];
 
 out GS_OUT{
     vec3 position;
     vec3 normal;
-    vec2 uv;
-    float lightlevel;
     vec4 lightpos;
-    flat int material;
+    vec2 uv;
 } gs_out;
 
 void createVertex(int index, vec3 normal){
@@ -25,8 +21,6 @@ void createVertex(int index, vec3 normal){
     gs_out.position = gs_in[index].position;
     gs_out.lightpos = gs_in[index].lightpos;
     gs_out.uv = gs_in[index].uv;
-    gs_out.lightlevel = gs_in[index].lightlevel;
-    gs_out.material = gs_in[index].material;
     gs_out.normal = normal;
     EmitVertex();
 }

@@ -2,7 +2,6 @@ package com.github.sidit77.voxelworld.worldv3.blocks;
 
 import com.github.sidit77.voxelworld.worldv3.Block;
 import com.github.sidit77.voxelworld.worldv3.Direction;
-import com.github.sidit77.voxelworld.worldv3.mesh.ChunkMesh;
 
 public class BlockAir extends Block {
 
@@ -16,11 +15,6 @@ public class BlockAir extends Block {
     }
 
     @Override
-    public void addToChunkMesh(ChunkMesh mesh, int x, int y, int z, Block[] neightbors, int[] lightlevels) {
-
-    }
-
-    @Override
     public boolean hasHitbox() {
         return false;
     }
@@ -28,5 +22,10 @@ public class BlockAir extends Block {
     @Override
     public boolean isOpaque() {
         return false;
+    }
+
+    @Override
+    public boolean isUnrendered(){
+        return true;
     }
 }

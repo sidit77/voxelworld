@@ -11,5 +11,7 @@ public class Blocks {
     public static final Block WOOL = new BlockWool();
     public static final Block BRICKS = new BlockBricks();
     public static final Block STONEBRICKS = new BlockStonebricks();
+    public static final Block WOOD = new BlockLog();
+    public static final Block LEAF = new BlockLeaf();
 
 }

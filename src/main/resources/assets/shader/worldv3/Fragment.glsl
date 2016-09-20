@@ -22,16 +22,14 @@ vec2 poissonDisk[16] = vec2[](
    vec2( 0.14383161, -0.14100790 )
 );
 
-in GS_OUT{
+in VS_OUT{
     vec3 position;
-    vec3 normal;
-    vec2 uv;
-    float lightlevel;
     vec4 lightpos;
-    flat int material;
+    vec2 uv;
+    vec3 normal;
 } fs_in;
 
-layout(binding = 0) uniform sampler2DArray colortexture;
+layout(binding = 0) uniform sampler2D colortexture;
 layout(binding = 1) uniform sampler2D shadowmap;
 
 uniform float darkness;
@@ -76,7 +74,7 @@ void main() {
     shadow = clamp(shadow, 0.0, 1.0);
 
     float sunlight = shadow * darkness * max(0.5, dot(normalize(fs_in.normal), normalize(lightDir)));//darkness *
-    color0 = texture(colortexture, vec3(fs_in.uv, float(fs_in.material))) * max(max(fs_in.lightlevel, sunlight),0.1);//dot(fs_in.normal, normalize(vec3(0.5,1,1)))
+    color0 = texture(colortexture, fs_in.uv) * max(max(0, sunlight),0.1);//dot(fs_in.normal, normalize(vec3(0.5,1,1)))
 
     color1 = vec4(0,0,0,1);
     //color = vec4((fs_in.normal + 1)/2, 1);
