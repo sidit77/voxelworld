@@ -1,9 +1,9 @@
-package com.github.sidit77.voxelworld.worldv3;
+package com.github.sidit77.voxelworld.world;
 
 
-public abstract class Block {
+public class Block {
 
-    public int[] textureids;
+    private int[] textureids;
     private String name;
 
     public Block(int texture, String name){
@@ -35,8 +35,9 @@ public abstract class Block {
         return 15;
     }
 
-    public void setTexture(Direction d, int id){
+    public Block setTexture(Direction d, int id){
         textureids[d.getID()] = id;
+        return this;
     }
 
     public String getName(){

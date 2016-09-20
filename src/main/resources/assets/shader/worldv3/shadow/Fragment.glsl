@@ -1,8 +1,16 @@
-#version 400 core
+#version 420 core
 
 out vec4 color;
 
+in vec2 uvs;
+
+layout(binding = 0) uniform sampler2D colortexture;
+
 void main() {
+
+    if(texture(colortexture, uvs).w < 0.5f){
+        discard;
+    }
 
     float depth = gl_FragCoord.z;
 

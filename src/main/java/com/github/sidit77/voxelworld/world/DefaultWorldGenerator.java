@@ -1,17 +1,23 @@
-package com.github.sidit77.voxelworld.worldv3;
+package com.github.sidit77.voxelworld.world;
 
 import com.github.sidit77.voxelworld.SimplexNoise;
-import com.github.sidit77.voxelworld.worldv3.blocks.Blocks;
+import com.github.sidit77.voxelworld.world.blocks.Blocks;
 
 import java.util.Random;
 
 public class DefaultWorldGenerator implements IWorldGenerator{
 
-    Random random = new Random();
+    Random random;
+    SimplexNoise simplex;
+
+    public DefaultWorldGenerator(long seed){
+        random = new Random(seed);
+        simplex = new SimplexNoise(random);
+    }
 
     @Override
     public Block generate(int x, int y, int z, World world) {
-        if(2 + SimplexNoise.noise((float)x / 100, (float)y / 100, (float)z / 100) - (float)(y) / 30 > 0){
+        if(2 + simplex.noise((float)x / 100, (float)y / 100, (float)z / 100) - (float)(y) / 30 > 0){
             return Blocks.STONE;
         }
         return Blocks.AIR;

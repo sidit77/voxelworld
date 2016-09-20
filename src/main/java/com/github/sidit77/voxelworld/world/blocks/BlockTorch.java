@@ -1,8 +1,8 @@
-package com.github.sidit77.voxelworld.worldv3.blocks;
+package com.github.sidit77.voxelworld.world.blocks;
 
-import com.github.sidit77.voxelworld.worldv3.Block;
-import com.github.sidit77.voxelworld.worldv3.Direction;
-import com.github.sidit77.voxelworld.worldv3.ISpecialRenderer;
+import com.github.sidit77.voxelworld.world.Block;
+import com.github.sidit77.voxelworld.world.Direction;
+import com.github.sidit77.voxelworld.world.ISpecialRenderer;
 
 import java.util.ArrayList;
 

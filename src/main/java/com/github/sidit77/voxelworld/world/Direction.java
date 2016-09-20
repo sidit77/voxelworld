@@ -1,4 +1,4 @@
-package com.github.sidit77.voxelworld.worldv3;
+package com.github.sidit77.voxelworld.world;
 
 import org.joml.Vector3f;
 

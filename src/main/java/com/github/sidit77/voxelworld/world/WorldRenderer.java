@@ -1,4 +1,4 @@
-package com.github.sidit77.voxelworld.worldv3;
+package com.github.sidit77.voxelworld.world;
 
 import com.github.sidit77.voxelworld.Camera;
 import com.github.sidit77.voxelworld.opengl.shader.GLSLProgram;
@@ -11,7 +11,7 @@ import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL12;
 import org.lwjgl.opengl.GL20;
 
-public class Terrain {
+public class WorldRenderer {
 
     private GLSLProgram shader;
     private GLSLProgram shadowshader;
@@ -19,16 +19,12 @@ public class Terrain {
 
     private Texture2D colortexture;
 
-    private IWorldGenerator generator = new DefaultWorldGenerator();
-
-
     private World world;
 
-    public Terrain(){
+    public WorldRenderer(){
         shader = new GLSLProgram()
                 .attachShaderAndDelete(GLSLShader.fromFile("assets/shader/worldv3/Vertex.glsl", GL20.GL_VERTEX_SHADER))
                 .attachShaderAndDelete(GLSLShader.fromFile("assets/shader/worldv3/Fragment.glsl", GL20.GL_FRAGMENT_SHADER))
-                //.attachShaderAndDelete(GLSLShader.fromFile("assets/shader/worldv3/Geometry.glsl", GL32.GL_GEOMETRY_SHADER))
                 .link();
 
         shadowshader = new GLSLProgram()
@@ -40,8 +36,9 @@ public class Terrain {
         colortexture.setFiltering(GL11.GL_NEAREST_MIPMAP_LINEAR, GL11.GL_NEAREST);
         colortexture.setWarpMode(GL12.GL_CLAMP_TO_EDGE);
         colortexture.setLODBias(-0.5f);
-        world = new World(14,6,14, generator);
 
+
+        world = new World(14,6,14, new DefaultWorldGenerator(System.nanoTime()));
 
     }
 
@@ -78,6 +75,7 @@ public class Terrain {
     public void render(Matrix4f mvp){
         shadowshader.bind();
         shadowshader.setUniform("mvp", false, mvp);
+        colortexture.bind(0);
         world.draw();
     }
 

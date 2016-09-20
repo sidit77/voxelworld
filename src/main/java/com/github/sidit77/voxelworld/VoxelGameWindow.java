@@ -15,9 +15,9 @@ import com.github.sidit77.voxelworld.system.GameWindow;
 import com.github.sidit77.voxelworld.system.input.Action;
 import com.github.sidit77.voxelworld.system.input.Key;
 import com.github.sidit77.voxelworld.system.input.MouseButton;
-import com.github.sidit77.voxelworld.worldv3.Block;
-import com.github.sidit77.voxelworld.worldv3.Terrain;
-import com.github.sidit77.voxelworld.worldv3.blocks.Blocks;
+import com.github.sidit77.voxelworld.world.Block;
+import com.github.sidit77.voxelworld.world.WorldRenderer;
+import com.github.sidit77.voxelworld.world.blocks.Blocks;
 import javafx.scene.paint.Color;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
@@ -47,9 +47,9 @@ public class VoxelGameWindow extends GameWindow{
     private int emptyvao;
 
     private int inventorySlot = 0;
-    private Block[] inventory = {Blocks.GRASS, Blocks.STONE, Blocks.WOOL, Blocks.STONEBRICKS, Blocks.BRICKS, Blocks.WOOD, Blocks.LEAF, Blocks.TORCH};
+    private Block[] inventory = {Blocks.GRASS, Blocks.STONE, Blocks.WOOL, Blocks.STONEBRICKS, Blocks.BRICKS, Blocks.WOOD, Blocks.LEAF, Blocks.TORCH, Blocks.GLASS};
 
-    private Terrain terrain;
+    private WorldRenderer worldRenderer;
     private Vector3f targetBlock;
     private Vector3f faceBlock;
 
@@ -126,7 +126,7 @@ public class VoxelGameWindow extends GameWindow{
                 }
             }
             if(key == Key.F9 && action == Action.Press){
-                terrain.setFog(!terrain.isFogEnabled());
+                worldRenderer.setFog(!worldRenderer.isFogEnabled());
             }
             if(key == Key.F8 && action == Action.Press){
                 physics = !physics;
@@ -141,8 +141,8 @@ public class VoxelGameWindow extends GameWindow{
                 System.out.println(camera.getPosition());
             }
             if(key == Key.G && action == Action.Press){
-                terrain.getWorld().setBlock(Math.round(camera.getPosition().x), Math.round(camera.getPosition().y), Math.round(camera.getPosition().z), Blocks.WOOL);
-                terrain.getWorld().update();
+                worldRenderer.getWorld().setBlock(Math.round(camera.getPosition().x), Math.round(camera.getPosition().y), Math.round(camera.getPosition().z), Blocks.WOOL);
+                worldRenderer.getWorld().update();
             }
         });
 
@@ -151,16 +151,16 @@ public class VoxelGameWindow extends GameWindow{
 
                 if(button == MouseButton.Middle && targetBlock != null) {
                     for(int i = 0; i < inventory.length; i++){
-                        if(terrain.getWorld().getBlock(targetBlock) == inventory[i])inventorySlot = i;
+                        if(worldRenderer.getWorld().getBlock(targetBlock) == inventory[i])inventorySlot = i;
                     }
                 }
                 if(button == MouseButton.Left && targetBlock != null) {
-                    terrain.getWorld().setBlock(targetBlock, Blocks.AIR);
+                    worldRenderer.getWorld().setBlock(targetBlock, Blocks.AIR);
                 }
                 if(button == MouseButton.Right && faceBlock != null) {
-                    terrain.getWorld().setBlock(faceBlock, inventory[inventorySlot]);
+                    worldRenderer.getWorld().setBlock(faceBlock, inventory[inventorySlot]);
                     if(physics && !canMoveTo(playerpos)){
-                        terrain.getWorld().setBlock(faceBlock, Blocks.AIR);
+                        worldRenderer.getWorld().setBlock(faceBlock, Blocks.AIR);
                     }
                 }
             }
@@ -256,7 +256,7 @@ public class VoxelGameWindow extends GameWindow{
         //camera.setPosition(5, 5, 15);
 
 
-        terrain = new Terrain();
+        worldRenderer = new WorldRenderer();
 
 
         emptyvao = GL30.glGenVertexArrays();
@@ -326,7 +326,7 @@ public class VoxelGameWindow extends GameWindow{
             camera.getPosition().set(new Vector3f(playerpos).add(camera.getBack().mul(5)));
         }
 
-        terrain.update();
+        worldRenderer.update();
         this.time += time * (getKeyboard().isKeyDown(Key.Q) ? 10 : 0);
 
 
@@ -336,7 +336,7 @@ public class VoxelGameWindow extends GameWindow{
         faceBlock = null;
         for(float i = 0; i < 10; i += 0.5f){
             pos.add(step);
-            if(terrain.getWorld().getBlock(pos) != Blocks.AIR){
+            if(worldRenderer.getWorld().getBlock(pos) != Blocks.AIR){
                 int bx = Math.round(pos.x);
                 int by = Math.round(pos.y);
                 int bz = Math.round(pos.z);
@@ -361,7 +361,7 @@ public class VoxelGameWindow extends GameWindow{
     }
 
     private boolean isAir(Vector3f pos){
-        return !terrain.getWorld().getBlock(pos).hasHitbox();
+        return !worldRenderer.getWorld().getBlock(pos).hasHitbox();
     }
 
     public boolean canMoveTo(Vector3f pos){
@@ -395,7 +395,7 @@ public class VoxelGameWindow extends GameWindow{
         Matrix4f lightMatrix = new Matrix4f();
         lightMatrix.ortho(-(shadowarea / 2), (shadowarea / 2), -(shadowarea / 2), (shadowarea / 2), 1, shadowdistance);
         lightMatrix.lookAt(new Vector3f(lightDir).normalize().mul(0.6f * shadowdistance).add(playerpos), new Vector3f(playerpos), new Vector3f(0, 1, 0));
-        terrain.render(lightMatrix);
+        worldRenderer.render(lightMatrix);
         playershadowshader.bind();
         playershadowshader.setUniform("mvp", false, lightMatrix);
         playershadowshader.setUniform("pos", playerpos);
@@ -427,7 +427,7 @@ public class VoxelGameWindow extends GameWindow{
         }
 
         GL11.glDepthFunc(GL11.GL_LESS);
-        terrain.render(camera, darkness, lightDir, shadowtex, lightMatrix);
+        worldRenderer.render(camera, darkness, lightDir, shadowtex, lightMatrix);
 
         if (thirdperson) {
             playershader.bind();
@@ -493,7 +493,7 @@ public class VoxelGameWindow extends GameWindow{
                         text.getText("Pos: [" + ((float) Math.round(playerpos.x * 10) / 10) + "," + ((float) Math.round(playerpos.y * 10) / 10) + "," + ((float) Math.round(playerpos.z * 10) / 10) + "]", size),
                         text.getText("Camera: " + (thirdperson ? "Third" : "First") + "person", size),
                         text.getText("Physics: " + physics, size),
-                        text.getText("LookAt: " + (faceBlock != null ? terrain.getWorld().getBlock(targetBlock).getName() : "-"), size),//terrain.getWorld().getLightLevel(faceBlock)
+                        text.getText("LookAt: " + (faceBlock != null ? worldRenderer.getWorld().getBlock(targetBlock).getName() : "-"), size),//worldRenderer.getWorld().getLightLevel(faceBlock)
                         text.getText("FPS: " + fps, size)
                 };
 
@@ -529,7 +529,7 @@ public class VoxelGameWindow extends GameWindow{
     }
     @Override
     public void destroy() {
-        terrain.delete();
+        worldRenderer.delete();
 
         GL30.glDeleteVertexArrays(emptyvao);
 
