@@ -89,6 +89,7 @@ public class VoxelGameWindow extends GameWindow{
     private boolean debug = false;
     private int fps;
 
+
     @Override
     public void load() {
 
