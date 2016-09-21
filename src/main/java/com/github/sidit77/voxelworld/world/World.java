@@ -96,10 +96,12 @@ public class World {
         GL20.glEnableVertexAttribArray(1);
         GL20.glEnableVertexAttribArray(2);
         GL20.glEnableVertexAttribArray(3);
-        GL20.glVertexAttribPointer(0, 3, GL11.GL_FLOAT, false, 9 * Float.BYTES, 0 * Float.BYTES);
-        GL20.glVertexAttribPointer(1, 2, GL11.GL_FLOAT, false, 9 * Float.BYTES, 3 * Float.BYTES);
-        GL20.glVertexAttribPointer(2, 3, GL11.GL_FLOAT, false, 9 * Float.BYTES, 5 * Float.BYTES);
-        GL20.glVertexAttribPointer(3, 1, GL11.GL_FLOAT, false, 9 * Float.BYTES, 8 * Float.BYTES);
+        GL20.glEnableVertexAttribArray(4);
+        GL20.glVertexAttribPointer(0, 3, GL11.GL_FLOAT, false, 10 * Float.BYTES, 0 * Float.BYTES);
+        GL20.glVertexAttribPointer(1, 2, GL11.GL_FLOAT, false, 10 * Float.BYTES, 3 * Float.BYTES);
+        GL20.glVertexAttribPointer(2, 3, GL11.GL_FLOAT, false, 10 * Float.BYTES, 5 * Float.BYTES);
+        GL20.glVertexAttribPointer(3, 1, GL11.GL_FLOAT, false, 10 * Float.BYTES, 8 * Float.BYTES);
+        GL20.glVertexAttribPointer(4, 1, GL11.GL_FLOAT, false, 10 * Float.BYTES, 9 * Float.BYTES);
         GL30.glBindVertexArray(0);
 
 
@@ -181,7 +183,7 @@ public class World {
                 }
             }
             verticesBuffer.flip();
-            vs /= 9;
+            vs /= 10;
 
             GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, vbo);
             GL15.glBufferData(GL15.GL_ARRAY_BUFFER, verticesBuffer, GL15.GL_DYNAMIC_DRAW);

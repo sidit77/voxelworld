@@ -4,6 +4,7 @@ layout(location = 0) in vec3 position;
 layout(location = 1) in vec2 uv;
 layout(location = 2) in vec3 normal;
 layout(location = 3) in float light;
+layout(location = 4) in float ao;
 
 out VS_OUT{
     vec3 position;
@@ -11,6 +12,7 @@ out VS_OUT{
     vec2 uv;
     vec3 normal;
     float light;
+    float ao;
 } vs_out;
 
 uniform mat4 mvp;
@@ -23,4 +25,5 @@ void main() {
     vs_out.uv = uv;
     vs_out.normal = normal;
     vs_out.light = light;
+    vs_out.ao = ao;
 }

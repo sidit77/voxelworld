@@ -60,14 +60,25 @@ public class Chunk extends WorldElement{
 
                                         //vlist.add((float)getLightLevel(cx + d.getXOffset(), cy + d.getYOffset(), cz + d.getZOffset()) / 16);
 
+                                        //float ll = 0;
+                                        //for(int i = 0; i < 4; i++){
+                                        //    int[] offsets = {0,0,0};
+                                        //    offsets[smoothlight[d.getID()][0]] = (i / 2) * (int)Math.signum(f[j + smoothlight[d.getID()][0]]);
+                                        //    offsets[smoothlight[d.getID()][1]] = (i % 2) * (int)Math.signum(f[j + smoothlight[d.getID()][1]]);
+                                        //    ll += (float)getLightLevel(cx + d.getXOffset() + offsets[0], cy + d.getYOffset() + offsets[1], cz + d.getZOffset() + offsets[2]) / (16 * 4);
+                                        //}
+
+                                        float ao = 0;
                                         float ll = 0;
                                         for(int i = 0; i < 4; i++){
                                             int[] offsets = {0,0,0};
                                             offsets[smoothlight[d.getID()][0]] = (i / 2) * (int)Math.signum(f[j + smoothlight[d.getID()][0]]);
                                             offsets[smoothlight[d.getID()][1]] = (i % 2) * (int)Math.signum(f[j + smoothlight[d.getID()][1]]);
+                                            ao += (getBlock(cx + d.getXOffset() + offsets[0], cy + d.getYOffset() + offsets[1], cz + d.getZOffset() + offsets[2]).isOpaque() ? 0.0f : 0.25f);
                                             ll += (float)getLightLevel(cx + d.getXOffset() + offsets[0], cy + d.getYOffset() + offsets[1], cz + d.getZOffset() + offsets[2]) / (16 * 4);
                                         }
                                         vlist.add(ll);
+                                        vlist.add(ao);
                                     }
                                 }
                             }
