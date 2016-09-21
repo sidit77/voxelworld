@@ -77,7 +77,7 @@ void main() {
     float sunlight = shadow * darkness * max(0.5, dot(normalize(fs_in.normal), normalize(lightDir)));//darkness *
     color0 = texture(colortexture, fs_in.uv);//dot(fs_in.normal, normalize(vec3(0.5,1,1)))
 
-    color0.xyz *= max(max(fs_in.light, sunlight),0.1);
+    color0.xyz *= max(max(fs_in.light, sunlight),0.1);//max(fs_in.light, sunlight)
 
     if(color0.w < 0.5){
         discard;

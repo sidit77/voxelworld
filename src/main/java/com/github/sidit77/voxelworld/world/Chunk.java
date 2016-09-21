@@ -57,7 +57,17 @@ public class Chunk extends WorldElement{
                                         vlist.add(d.asVector().x);
                                         vlist.add(d.asVector().y);
                                         vlist.add(d.asVector().z);
-                                        vlist.add((float)getLightLevel(cx + d.getXOffset(), cy + d.getYOffset(), cz + d.getZOffset()) / 16);
+
+                                        //vlist.add((float)getLightLevel(cx + d.getXOffset(), cy + d.getYOffset(), cz + d.getZOffset()) / 16);
+
+                                        float ll = 0;
+                                        for(int i = 0; i < 4; i++){
+                                            int[] offsets = {0,0,0};
+                                            offsets[smoothlight[d.getID()][0]] = (i / 2) * (int)Math.signum(f[j + smoothlight[d.getID()][0]]);
+                                            offsets[smoothlight[d.getID()][1]] = (i % 2) * (int)Math.signum(f[j + smoothlight[d.getID()][1]]);
+                                            ll += (float)getLightLevel(cx + d.getXOffset() + offsets[0], cy + d.getYOffset() + offsets[1], cz + d.getZOffset() + offsets[2]) / (16 * 4);
+                                        }
+                                        vlist.add(ll);
                                     }
                                 }
                             }
@@ -431,6 +441,15 @@ public class Chunk extends WorldElement{
                     0.5f, -0.5f, -0.5f,0, 0,
                     0.5f, -0.5f,  0.5f,0, 1
             }
+    };
+
+    int[][] smoothlight = {
+        {0,1},
+        {1,2},
+        {0,1},
+        {1,2},
+        {0,2},
+        {0,2},
     };
 
 }
