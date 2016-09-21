@@ -88,7 +88,7 @@ public class ObjBlock extends Block implements ISpecialRenderer {
             list.add(faces[i + 6]);
             list.add(faces[i + 7]);
 
-            list.add(1.0f);
+            list.add(1.0f); //TODO CHANGE
 
         }
     }
