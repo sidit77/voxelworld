@@ -66,6 +66,21 @@ public class BorderChunk extends WorldElement {
         return false;
     }
 
+    @Override
+    public byte getLightLevel(int x, int y, int z) {
+        return 0;
+    }
+
+    @Override
+    public void setLightLevel(int x, int y, int z, byte lvl) {
+
+    }
+
+    @Override
+    public void setLighting(boolean enabled) {
+
+    }
+
     private class BorderBlock extends Block{
 
         public BorderBlock() {

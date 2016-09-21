@@ -29,7 +29,7 @@ public class Blocks {
 
     };
     public static final Block STONE = new Block(4, "Stone");
-    public static final Block TORCH = new BlockTorch();
+    public static final Block TORCH = new TorchBlock();
     public static final Block GRASS = new Block(3, "Grass").setTexture(Direction.UP, 2).setTexture(Direction.DOWN, 1);
     public static final Block WOOL = new Block(6, "Wool");
     public static final Block BRICKS = new Block(0, "Bricks");

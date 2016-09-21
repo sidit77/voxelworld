@@ -1,6 +1,8 @@
 package com.github.sidit77.voxelworld.world;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.Queue;
 
 public class Chunk extends WorldElement{
 
@@ -9,13 +11,17 @@ public class Chunk extends WorldElement{
     private WorldElement top, bottom, left, right, front, back;
 
     private Block[][][] blocks;
+    private byte[][][] lightmap;
 
     private float[] vertices = {};
 
     private boolean update = true;
 
+    private boolean lighting = false;
+
     public Chunk() {
         blocks = new Block[size][size][size];
+        lightmap = new byte[size][size][size];
     }
 
     @Override
@@ -25,6 +31,7 @@ public class Chunk extends WorldElement{
 
     @Override
     public void generateMesh(int x, int y, int z) {
+
         ArrayList<Float> vlist = new ArrayList<>();
 
         for(int cx = 0; cx < size; cx++){
@@ -47,6 +54,7 @@ public class Chunk extends WorldElement{
                                         vlist.add(d.asVector().x);
                                         vlist.add(d.asVector().y);
                                         vlist.add(d.asVector().z);
+                                        vlist.add((float)getLightLevel(cx + d.getXOffset(), cy + d.getYOffset(), cz + d.getZOffset()) / 16);
                                     }
                                 }
                             }
@@ -72,6 +80,71 @@ public class Chunk extends WorldElement{
     @Override
     public boolean updateRequired(){
         return update;
+    }
+
+    @Override
+    public byte getLightLevel(int x, int y, int z) {
+        if(x < 0){
+            return left.getLightLevel(x + size, y, z);
+        }
+        if(x >= size){
+            return right.getLightLevel(x - size, y, z);
+        }
+        if(y < 0){
+            return bottom.getLightLevel(x, y + size, z);
+        }
+        if(y >= size){
+            return top.getLightLevel(x, y - size, z);
+        }
+        if(z < 0){
+            return back.getLightLevel(x, y, z + size);
+        }
+        if(z >= size){
+            return front.getLightLevel(x, y, z - size);
+        }
+        return lightmap[x][y][z];
+    }
+
+    @Override
+    public void setLightLevel(int x, int y, int z, byte lvl) {
+        if(x < 0){
+            left.setLightLevel(x + size, y, z, lvl);
+            return;
+        }
+        if(x >= size){
+            right.setLightLevel(x - size, y, z, lvl);
+            return;
+        }
+        if(y < 0){
+            bottom.setLightLevel(x, y + size, z, lvl);
+            return;
+        }
+        if(y >= size){
+            top.setLightLevel(x, y - size, z, lvl);
+            return;
+        }
+        if(z < 0){
+            back.setLightLevel(x, y, z + size, lvl);
+            return;
+        }
+        if(z >= size){
+            front.setLightLevel(x, y, z - size, lvl);
+            return;
+        }
+        lightmap[x][y][z] = lvl;
+        this.needUpdate();
+        if(x == 0)
+            left.needUpdate();
+        if(y == 0)
+            bottom.needUpdate();
+        if(z == 0)
+            back.needUpdate();
+        if(x == size - 1)
+            right.needUpdate();
+        if(y == size - 1)
+            top.needUpdate();
+        if(z == size - 1)
+            front.needUpdate();
     }
 
     @Override
@@ -123,7 +196,37 @@ public class Chunk extends WorldElement{
             front.setBlock(x, y, z - size, b);
             return;
         }
+
+        Block old = blocks[x][y][z];
         blocks[x][y][z] = b;
+
+        if(lighting){
+            if(old instanceof ILightSource){
+                byte l = lightmap[x][y][z];
+                lightmap[x][y][z] = 0;
+                removeLight(x,y,z, l);
+            }
+            if(b instanceof ILightSource){
+                lightmap[x][y][z] = (byte)Math.max(lightmap[x][y][z], ((ILightSource)b).getLightLevel());
+                addLight(x,y,z);
+            }
+            if(b.isOpaque() && !old.isOpaque()){
+                byte l = lightmap[x][y][z];
+                lightmap[x][y][z] = 0;
+                removeLight(x,y,z, l);
+            }
+            if(!b.isOpaque() && old.isOpaque()){
+                byte biggestlevel = 0;
+                for(Direction d : Direction.values()){
+                    if(!getBlock(x + d.getXOffset(), y + d.getYOffset(), z + d.getZOffset()).isOpaque()){
+                        biggestlevel = (byte)Math.max(biggestlevel, getLightLevel(x + d.getXOffset(), y + d.getYOffset(), z + d.getZOffset()) - 1);
+                    }
+                }
+                lightmap[x][y][z] = biggestlevel;
+                addLight(x,y,z);
+            }
+        }
+
         this.needUpdate();
         if(x == 0)
             left.needUpdate();
@@ -167,6 +270,136 @@ public class Chunk extends WorldElement{
     @Override
     public void setBack(WorldElement back) {
         this.back = back;
+    }
+
+    @Override
+    public void setLighting(boolean enabled) {
+        lighting = enabled;
+        if(lighting) {
+            for (int x = 0; x < size; x++) {
+                for (int y = 0; y < size; y++) {
+                    for (int z = 0; z < size; z++) {
+                        if (blocks[x][y][z] instanceof ILightSource) {
+                            lightmap[x][y][z] = (byte) Math.max(lightmap[x][y][z], ((ILightSource) blocks[x][y][z]).getLightLevel());
+                            addLight(x, y, z);
+                        }
+                    }
+                }
+            }
+        }else{
+            lightmap = new byte[size][size][size];
+        }
+    }
+
+
+    private void addLight(int x, int y, int z){
+        Queue<LightNode> lightQueue = new LinkedList<>();
+        lightQueue.add(new LightNode(x,y,z));
+
+        while(!lightQueue.isEmpty()){
+            LightNode node = lightQueue.remove();
+
+            byte lightlevel = getLightLevel(node.getX(),node.getY(),node.getZ());
+            for(Direction d : Direction.values()){
+                if(!getBlock(node.getX() + d.getXOffset(), node.getY() + d.getYOffset(), node.getZ() + d.getZOffset()).isOpaque() &&
+                    getLightLevel(node.getX() + d.getXOffset(), node.getY() + d.getYOffset(), node.getZ() + d.getZOffset()) + 2 <= lightlevel){
+
+                    setLightLevel(node.getX() + d.getXOffset(), node.getY() + d.getYOffset(), node.getZ() + d.getZOffset(), (byte)(lightlevel - 1));
+                    lightQueue.add(new LightNode(node.getX() + d.getXOffset(), node.getY() + d.getYOffset(), node.getZ() + d.getZOffset()));
+                }
+            }
+
+        }
+    }
+
+    private void removeLight(int x, int y, int z, byte lslvl){
+        Queue<LightRemovalNode> lightRemoveQueue = new LinkedList<>();
+        Queue<LightNode> lightQueue = new LinkedList<>();
+
+        lightRemoveQueue.add(new LightRemovalNode(x,y,z, lslvl));
+
+        while(!lightRemoveQueue.isEmpty()){
+            LightRemovalNode node = lightRemoveQueue.remove();
+
+            for(Direction d : Direction.values()){
+                byte neighborlevel = getLightLevel(node.getX() + d.getXOffset(), node.getY() + d.getYOffset(), node.getZ() + d.getZOffset());
+
+                if(neighborlevel != 0 && neighborlevel < node.getVal()){
+                    setLightLevel(node.getX() + d.getXOffset(), node.getY() + d.getYOffset(), node.getZ() + d.getZOffset(), (byte)0);
+                    lightRemoveQueue.add(new LightRemovalNode(node.getX() + d.getXOffset(), node.getY() + d.getYOffset(), node.getZ() + d.getZOffset(), neighborlevel));
+                }else if(neighborlevel >= node.getVal()){
+                    lightQueue.add(new LightNode(node.getX() + d.getXOffset(), node.getY() + d.getYOffset(), node.getZ() + d.getZOffset()));
+                }
+            }
+        }
+
+        while(!lightQueue.isEmpty()){
+            LightNode node = lightQueue.remove();
+
+            byte lightlevel = getLightLevel(node.getX(),node.getY(),node.getZ());
+            for(Direction d : Direction.values()){
+                if(!getBlock(node.getX() + d.getXOffset(), node.getY() + d.getYOffset(), node.getZ() + d.getZOffset()).isOpaque() &&
+                    getLightLevel(node.getX() + d.getXOffset(), node.getY() + d.getYOffset(), node.getZ() + d.getZOffset()) + 2 <= lightlevel){
+
+                    setLightLevel(node.getX() + d.getXOffset(), node.getY() + d.getYOffset(), node.getZ() + d.getZOffset(), (byte)(lightlevel - 1));
+                    lightQueue.add(new LightNode(node.getX() + d.getXOffset(), node.getY() + d.getYOffset(), node.getZ() + d.getZOffset()));
+                }
+            }
+
+        }
+    }
+
+    private class LightNode{
+
+        private int x, y, z;
+
+        public LightNode(int x, int y, int z){
+            this.x = x;
+            this.y = y;
+            this.z = z;
+        }
+
+        public int getX() {
+            return x;
+        }
+
+        public int getY() {
+            return y;
+        }
+
+        public int getZ() {
+            return z;
+        }
+
+    }
+
+    private class LightRemovalNode{
+
+        private int x, y, z;
+        private byte val;
+
+        public LightRemovalNode(int x, int y, int z, byte val){
+            this.x = x;
+            this.y = y;
+            this.z = z;
+            this.val = val;
+        }
+
+        public int getX() {
+            return x;
+        }
+
+        public int getY() {
+            return y;
+        }
+
+        public int getZ() {
+            return z;
+        }
+
+        public byte getVal(){
+            return val;
+        }
     }
 
     float[][] faces = {

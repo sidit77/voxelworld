@@ -79,6 +79,13 @@ public class World {
 
         System.out.println("Finished postgenerate");
 
+        for(int x = 1; x < dimX + 1; x++) {
+            for (int y = 1; y < dimY + 1; y++) {
+                for (int z = 1; z < dimZ + 1; z++) {
+                    chunks[x][y][z].setLighting(true);
+                }
+            }
+        }
 
         vao = GL30.glGenVertexArrays();
         vbo = GL15.glGenBuffers();
@@ -88,9 +95,11 @@ public class World {
         GL20.glEnableVertexAttribArray(0);
         GL20.glEnableVertexAttribArray(1);
         GL20.glEnableVertexAttribArray(2);
-        GL20.glVertexAttribPointer(0, 3, GL11.GL_FLOAT, false, 8 * Float.BYTES, 0 * Float.BYTES);
-        GL20.glVertexAttribPointer(1, 2, GL11.GL_FLOAT, false, 8 * Float.BYTES, 3 * Float.BYTES);
-        GL20.glVertexAttribPointer(2, 3, GL11.GL_FLOAT, false, 8 * Float.BYTES, 5 * Float.BYTES);
+        GL20.glEnableVertexAttribArray(3);
+        GL20.glVertexAttribPointer(0, 3, GL11.GL_FLOAT, false, 9 * Float.BYTES, 0 * Float.BYTES);
+        GL20.glVertexAttribPointer(1, 2, GL11.GL_FLOAT, false, 9 * Float.BYTES, 3 * Float.BYTES);
+        GL20.glVertexAttribPointer(2, 3, GL11.GL_FLOAT, false, 9 * Float.BYTES, 5 * Float.BYTES);
+        GL20.glVertexAttribPointer(3, 1, GL11.GL_FLOAT, false, 9 * Float.BYTES, 8 * Float.BYTES);
         GL30.glBindVertexArray(0);
 
 
@@ -111,6 +120,25 @@ public class World {
 
     public  int getLightLevel(Vector3f pos){
         return 0;//getLightLevel(Math.round(pos.x), Math.round(pos.y), Math.round(pos.z));
+    }
+
+    public void recalculateLighting(){
+        for (int x = 0; x < chunks.length; x++) {
+            for (int y = 0; y < chunks[0].length; y++) {
+                for (int z = 0; z < chunks[0][0].length; z++) {
+                    chunks[x][y][z].setLighting(false);
+                }
+            }
+        }
+        for (int x = 0; x < chunks.length; x++) {
+            for (int y = 0; y < chunks[0].length; y++) {
+                for (int z = 0; z < chunks[0][0].length; z++) {
+                    chunks[x][y][z].setLighting(true);
+                    chunks[x][y][z].needUpdate();
+                }
+            }
+        }
+        update = true;
     }
 
     public void setBlock(int x, int y, int z, Block block){
@@ -153,7 +181,7 @@ public class World {
                 }
             }
             verticesBuffer.flip();
-            vs /= 8;
+            vs /= 9;
 
             GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, vbo);
             GL15.glBufferData(GL15.GL_ARRAY_BUFFER, verticesBuffer, GL15.GL_DYNAMIC_DRAW);

@@ -53,13 +53,13 @@ public class GaussianBlur {
         tempFrameBuffer.bind();
         GL11.glClear(GL11.GL_COLOR_BUFFER_BIT);
         origin.bind(0);
-        shader.setUniform("direction", 0.0f, 3.0f);
+        shader.setUniform("direction", 0.0f, 1.0f);
         GL11.glDrawArrays(GL11.GL_TRIANGLES, 0, 6);
 
         targetFramebuffer.bind();
         GL11.glClear(GL11.GL_COLOR_BUFFER_BIT);
         temp.bind(0);
-        shader.setUniform("direction", 3.0f, 0.0f);
+        shader.setUniform("direction", 1.0f, 0.0f);
         GL11.glDrawArrays(GL11.GL_TRIANGLES, 0, 6);
 
         targetFramebuffer.unbind();

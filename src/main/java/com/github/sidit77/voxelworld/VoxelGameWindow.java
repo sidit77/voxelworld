@@ -89,6 +89,8 @@ public class VoxelGameWindow extends GameWindow{
     private boolean debug = false;
     private int fps;
 
+    private Vector3f playerpos;
+    private float velocity = 0;
 
     @Override
     public void load() {
@@ -136,6 +138,9 @@ public class VoxelGameWindow extends GameWindow{
             }
             if(key == Key.F6 && action == Action.Press){
                 debug = !debug;
+            }
+            if(key == Key.F5 && action == Action.Press){
+                worldRenderer.getWorld().recalculateLighting();
             }
             if(key == Key.Tab && action == Action.Press){
                 System.out.println(camera.getPosition());
@@ -263,10 +268,15 @@ public class VoxelGameWindow extends GameWindow{
 
 
         text = new TextRenderer(fonttexture, Font.fromFile("assets/texture/font/ComicSans.fnt", 0, -14), getWidth(), getHeight());
-    }
 
-    private Vector3f playerpos = new Vector3f(60, 50, 60);
-    private float velocity = 0;
+
+        playerpos = new Vector3f(150, 100, 150);
+        while(worldRenderer.getWorld().getBlock(playerpos) == Blocks.AIR) {
+            playerpos.sub(0, 1, 0);
+        }
+        playerpos.add(0, 2.5f, 0);
+
+    }
 
     @Override
     public void update(double time) {
@@ -389,6 +399,7 @@ public class VoxelGameWindow extends GameWindow{
         GL11.glViewport(0, 0, shadowres, shadowres);
         //GL11.glCullFace(GL11.GL_FRONT);
         GL11.glDisable(GL11.GL_CULL_FACE);
+        GL11.glDepthFunc(GL11.GL_LESS);
         shadowmap.bind();
         GL11.glClearColor(1, 1, 0, 1);
         GL11.glClear(GL11.GL_DEPTH_BUFFER_BIT | GL11.GL_COLOR_BUFFER_BIT);

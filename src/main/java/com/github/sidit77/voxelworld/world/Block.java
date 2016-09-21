@@ -27,14 +27,6 @@ public class Block {
         return true;
     }
 
-    public boolean isLightSource(){
-        return false;
-    }
-
-    public int getLightLevel(){
-        return 15;
-    }
-
     public Block setTexture(Direction d, int id){
         textureids[d.getID()] = id;
         return this;
