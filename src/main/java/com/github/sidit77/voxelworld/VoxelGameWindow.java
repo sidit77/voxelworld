@@ -425,7 +425,7 @@ public class VoxelGameWindow extends GameWindow{
             worldRenderer.render(camera, darkness, lightDir, shadowtex, lightMatrix);
 
             if (thirdperson) {
-                playermodel.render(playerpos, playerrot, camera.getCameraMatrix(), lightDir, Math.max(darkness, (float)worldRenderer.getWorld().getLightLevel(playerpos) / 16));
+                playermodel.render(playerpos, playerrot, camera.getCameraMatrix(), lightDir, darkness, (float)worldRenderer.getWorld().getLightLevel(playerpos) / 16, lightMatrix, shadowtex);
             }
 
             if (targetBlock != null) {

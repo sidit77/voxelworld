@@ -2,6 +2,7 @@ package com.github.sidit77.voxelworld;
 
 import com.github.sidit77.voxelworld.opengl.shader.GLSLProgram;
 import com.github.sidit77.voxelworld.opengl.shader.GLSLShader;
+import com.github.sidit77.voxelworld.opengl.texture.EmptyTexture2D;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
@@ -64,14 +65,17 @@ public class CharacterModel {
         GL11.glDrawArrays(GL11.GL_TRIANGLES, 0, vl);
     }
 
-    public void render(Vector3f playerpos, Matrix3f playerrot, Matrix4f matrix, Vector3f lightDir, float darkness){
+    public void render(Vector3f playerpos, Matrix3f playerrot, Matrix4f matrix, Vector3f lightDir, float darkness, float torch, Matrix4f lightmatrix, EmptyTexture2D shadowmap){
         GL30.glBindVertexArray(vao);
+        shadowmap.bind(1);
         playershader.bind();
         playershader.setUniform("mvp", false, matrix);
         playershader.setUniform("pos", playerpos);
         playershader.setUniform("rot", false, playerrot);
         playershader.setUniform("light", lightDir);
         playershader.setUniform("dark", darkness);
+        playershader.setUniform("torch", torch);
+        playershader.setUniform("lightmatrix", false, lightmatrix);
         GL11.glDrawArrays(GL11.GL_TRIANGLES, 0, vl);
     }
 
