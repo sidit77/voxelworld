@@ -18,6 +18,7 @@ import com.github.sidit77.voxelworld.world.Block;
 import com.github.sidit77.voxelworld.world.WorldRenderer;
 import com.github.sidit77.voxelworld.world.blocks.Blocks;
 import javafx.scene.paint.Color;
+import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
@@ -55,8 +56,6 @@ public class VoxelGameWindow extends GameWindow{
     private GLSLProgram ppshader;
     private GLSLProgram skyboxShader;
     private GLSLProgram pickingshader;
-    private GLSLProgram playershader;
-    private GLSLProgram playershadowshader;
     private GLSLProgram radialblurshader;
     private Texture2D glowtexture;
     private Texture2D moontexture;
@@ -88,6 +87,8 @@ public class VoxelGameWindow extends GameWindow{
 
     private Vector3f playerpos;
     private float velocity = 0;
+
+    private CharacterModel playermodel;
 
     @Override
     public void load() {
@@ -181,15 +182,7 @@ public class VoxelGameWindow extends GameWindow{
                 .attachShaderAndDelete(GLSLShader.fromFile("assets/shader/PickingFragment.glsl", GL20.GL_FRAGMENT_SHADER))
                 .link();
 
-        playershader = new GLSLProgram()
-                .attachShaderAndDelete(GLSLShader.fromFile("assets/shader/PlayerVertex.glsl", GL20.GL_VERTEX_SHADER))
-                .attachShaderAndDelete(GLSLShader.fromFile("assets/shader/PlayerFragment.glsl", GL20.GL_FRAGMENT_SHADER))
-                .link();
-
-        playershadowshader = new GLSLProgram()
-                .attachShaderAndDelete(GLSLShader.fromFile("assets/shader/PlayerVertex.glsl", GL20.GL_VERTEX_SHADER))
-                .attachShaderAndDelete(GLSLShader.fromFile("assets/shader/worldv3/shadow/Fragment.glsl", GL20.GL_FRAGMENT_SHADER))
-                .link();
+        playermodel = new CharacterModel();
 
         fonttexture = Texture2D.fromFile("assets/texture/font/ComicSans.png");
         glowtexture = Texture2D.fromFile("assets/texture/glow.png");
@@ -373,12 +366,18 @@ public class VoxelGameWindow extends GameWindow{
     public void render() {
         GL11.glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT);
 
+        Matrix3f playerrot = new Matrix3f().lookAlong(camera.getForward().mul(1,0,1).normalize(), new Vector3f(0,1,0)).transpose().rotate((float)Math.PI/2, 0, 1, 0);
+
         if(wireframe) {
             GL11.glDisable(GL11.GL_CULL_FACE);
             GL11.glPolygonMode(GL11.GL_FRONT_AND_BACK, GL11.GL_LINE);
 
             GL11.glViewport(0, 0, getWidth(), getHeight());
             worldRenderer.render(camera.getCameraMatrix());
+
+            if(thirdperson){
+                playermodel.rendershadow(playerpos, playerrot, camera.getCameraMatrix());
+            }
 
             GL11.glPolygonMode(GL11.GL_FRONT_AND_BACK, GL11.GL_FILL);
             GL11.glEnable(GL11.GL_CULL_FACE);
@@ -396,10 +395,7 @@ public class VoxelGameWindow extends GameWindow{
             lightMatrix.ortho(-(shadowarea / 2), (shadowarea / 2), -(shadowarea / 2), (shadowarea / 2), 1, shadowdistance);
             lightMatrix.lookAt(new Vector3f(lightDir).normalize().mul(0.6f * shadowdistance).add(playerpos), new Vector3f(playerpos), new Vector3f(0, 1, 0));
             worldRenderer.render(lightMatrix);
-            playershadowshader.bind();
-            playershadowshader.setUniform("mvp", false, lightMatrix);
-            playershadowshader.setUniform("pos", playerpos);
-            GL11.glDrawArrays(GL11.GL_TRIANGLES, 0, 36);
+            playermodel.rendershadow(playerpos, playerrot, lightMatrix);
             shadowmap.unbind();
             GL11.glEnable(GL11.GL_CULL_FACE);
 
@@ -429,10 +425,7 @@ public class VoxelGameWindow extends GameWindow{
             worldRenderer.render(camera, darkness, lightDir, shadowtex, lightMatrix);
 
             if (thirdperson) {
-                playershader.bind();
-                playershader.setUniform("mvp", false, camera.getCameraMatrix());
-                playershader.setUniform("pos", playerpos);
-                GL11.glDrawArrays(GL11.GL_TRIANGLES, 0, 36);
+                playermodel.render(playerpos, playerrot, camera.getCameraMatrix(), lightDir, Math.max(darkness, (float)worldRenderer.getWorld().getLightLevel(playerpos) / 16));
             }
 
             if (targetBlock != null) {
@@ -476,7 +469,7 @@ public class VoxelGameWindow extends GameWindow{
 
         if (!getKeyboard().isKeyDown(Key.F1)) {
 
-            text.render("+", (getWidth()-30)/ 2, (getHeight() - 90) / 2, 1f, Color.WHITE, 0.75f);
+            if(!thirdperson) text.render("+", (getWidth()-30)/ 2, (getHeight() - 90) / 2, 1f, Color.WHITE, 0.75f);
             text.render(inventory[inventorySlot].getName(), 20, 10, 0.7f, Color.WHITE, 0.75f);
             text.render("F1: Keybindings", 20, getHeight() - 40, 0.4f, Color.WHITE, 0.75f);
 
@@ -537,8 +530,7 @@ public class VoxelGameWindow extends GameWindow{
         nighttexture.delete();
         daytexture.delete();
         pickingshader.delete();
-        playershader.delete();
-        playershadowshader.delete();
+        playermodel.delete();
         fonttexture.delete();
         text.delete();
 

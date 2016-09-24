@@ -1,9 +1,6 @@
 package com.github.sidit77.voxelworld.opengl.shader;
 
-import org.joml.Matrix4f;
-import org.joml.Vector2f;
-import org.joml.Vector3f;
-import org.joml.Vector4f;
+import org.joml.*;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL20;
 import org.lwjgl.opengl.GL31;
@@ -192,5 +189,14 @@ public class GLSLProgram {
     }
 
 
+    public void setUniform(String name, boolean transpose, Matrix3f matrix) {
+        setUniform(getUniform(name), transpose, matrix);
+    }
+
+    private void setUniform(int uniform, boolean transpose, Matrix3f matrix) {
+        matrix.get(matrixbuffer);
+        GL20.glUniformMatrix3fv(uniform, transpose, matrixbuffer);
+        matrixbuffer.rewind();
+    }
 }
 
