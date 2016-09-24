@@ -5,7 +5,6 @@ import com.github.sidit77.voxelworld.gui.text.Text;
 import com.github.sidit77.voxelworld.gui.text.TextRenderer;
 import com.github.sidit77.voxelworld.opengl.framebuffer.FrameBuffer;
 import com.github.sidit77.voxelworld.opengl.framebuffer.RenderBuffer;
-import com.github.sidit77.voxelworld.opengl.postprogress.GaussianBlur;
 import com.github.sidit77.voxelworld.opengl.shader.GLSLProgram;
 import com.github.sidit77.voxelworld.opengl.shader.GLSLShader;
 import com.github.sidit77.voxelworld.opengl.texture.CubeMapTexture;
@@ -53,7 +52,6 @@ public class VoxelGameWindow extends GameWindow{
     private Vector3f targetBlock;
     private Vector3f faceBlock;
 
-    private GLSLProgram hudshader;
     private GLSLProgram ppshader;
     private GLSLProgram skyboxShader;
     private GLSLProgram pickingshader;
@@ -82,11 +80,10 @@ public class VoxelGameWindow extends GameWindow{
     private FrameBuffer radialblurframebuffer;
     private EmptyTexture2D radialblurtexture;
 
-    private GaussianBlur blur;
-
     private boolean physics = false;
     private boolean thirdperson = false;
     private boolean debug = false;
+    private boolean wireframe = false;
     private int fps;
 
     private Vector3f playerpos;
@@ -97,7 +94,7 @@ public class VoxelGameWindow extends GameWindow{
 
         System.out.println(GL11.glGetString(GL11.GL_VERSION));
 
-        GL11.glClearColor(0.5f, 0.5f, 1, 1);
+        GL11.glClearColor(0.5f, 0.5f, 0.5f, 1);
         GL11.glEnable(GL11.GL_DEPTH_TEST);
         GL11.glEnable(GL11.GL_CULL_FACE);
         GL11.glEnable(GL20.GL_VERTEX_PROGRAM_POINT_SIZE);
@@ -119,16 +116,7 @@ public class VoxelGameWindow extends GameWindow{
                 }
             }
             if(key == Key.F10 && action == Action.Press){
-                if(GL11.glIsEnabled(GL11.GL_CULL_FACE)){
-                    GL11.glDisable(GL11.GL_CULL_FACE);
-                    GL11.glPolygonMode(GL11.GL_FRONT_AND_BACK, GL11.GL_LINE);
-                }else{
-                    GL11.glEnable(GL11.GL_CULL_FACE);
-                    GL11.glPolygonMode(GL11.GL_FRONT_AND_BACK, GL11.GL_FILL);
-                }
-            }
-            if(key == Key.F9 && action == Action.Press){
-                worldRenderer.setFog(!worldRenderer.isFogEnabled());
+                wireframe = !wireframe;
             }
             if(key == Key.F8 && action == Action.Press){
                 physics = !physics;
@@ -171,11 +159,6 @@ public class VoxelGameWindow extends GameWindow{
             }
 
         });
-
-        hudshader = new GLSLProgram()
-                .attachShaderAndDelete(GLSLShader.fromFile("assets/shader/HUDVertex.glsl", GL20.GL_VERTEX_SHADER))
-                .attachShaderAndDelete(GLSLShader.fromFile("assets/shader/HUDFragment.glsl", GL20.GL_FRAGMENT_SHADER))
-                .link();
 
         skyboxShader = new GLSLProgram()
                 .attachShaderAndDelete(GLSLShader.fromFile("assets/shader/SkyboxVertex.glsl", GL20.GL_VERTEX_SHADER))
@@ -249,8 +232,6 @@ public class VoxelGameWindow extends GameWindow{
         if(!shadowmap.isOK())System.out.println("ERROR");
         shadowmap.unbind();
 
-        blur = new GaussianBlur(renderTexture, getWidth()/4, getHeight()/4);
-
         radialblurtexture = new EmptyTexture2D(getWidth()/8, getHeight()/8);
         radialblurframebuffer = new FrameBuffer().attachTexture(radialblurtexture, GL30.GL_COLOR_ATTACHMENT0);
         if(!radialblurframebuffer.isOK())System.out.println("ERROR");
@@ -268,7 +249,6 @@ public class VoxelGameWindow extends GameWindow{
 
 
         text = new TextRenderer(fonttexture, Font.fromFile("assets/texture/font/ComicSans.fnt", 0, -14), getWidth(), getHeight());
-
 
         playerpos = new Vector3f(150, 100, 150);
         while(worldRenderer.getWorld().getBlock(playerpos) == Blocks.AIR) {
@@ -337,7 +317,7 @@ public class VoxelGameWindow extends GameWindow{
         }
 
         worldRenderer.update();
-        this.time += time * (getKeyboard().isKeyDown(Key.Q) ? 10 : 0);
+        this.time += time * (getKeyboard().isKeyDown(Key.Q) ? 10 : 0.3);
 
 
         Vector3f pos = new Vector3f(playerpos);
@@ -393,30 +373,38 @@ public class VoxelGameWindow extends GameWindow{
     public void render() {
         GL11.glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT);
 
-        Vector3f lightDir = new Vector3f((float) Math.cos(time / 20), (float) Math.sin(time / 20), (float) Math.sin(time / 20) * 0.5f);
-        float darkness = (float) Math.max(0, Math.min(lightDir.y + 0.5, 1));
+        if(wireframe) {
+            GL11.glDisable(GL11.GL_CULL_FACE);
+            GL11.glPolygonMode(GL11.GL_FRONT_AND_BACK, GL11.GL_LINE);
 
-        GL11.glViewport(0, 0, shadowres, shadowres);
-        //GL11.glCullFace(GL11.GL_FRONT);
-        GL11.glDisable(GL11.GL_CULL_FACE);
-        GL11.glDepthFunc(GL11.GL_LESS);
-        shadowmap.bind();
-        GL11.glClearColor(1, 1, 0, 1);
-        GL11.glClear(GL11.GL_DEPTH_BUFFER_BIT | GL11.GL_COLOR_BUFFER_BIT);
-        Matrix4f lightMatrix = new Matrix4f();
-        lightMatrix.ortho(-(shadowarea / 2), (shadowarea / 2), -(shadowarea / 2), (shadowarea / 2), 1, shadowdistance);
-        lightMatrix.lookAt(new Vector3f(lightDir).normalize().mul(0.6f * shadowdistance).add(playerpos), new Vector3f(playerpos), new Vector3f(0, 1, 0));
-        worldRenderer.render(lightMatrix);
-        playershadowshader.bind();
-        playershadowshader.setUniform("mvp", false, lightMatrix);
-        playershadowshader.setUniform("pos", playerpos);
-        GL11.glDrawArrays(GL11.GL_TRIANGLES, 0, 36);
-        shadowmap.unbind();
-        GL11.glEnable(GL11.GL_CULL_FACE);
-        //GL11.glCullFace(GL11.GL_BACK);
+            GL11.glViewport(0, 0, getWidth(), getHeight());
+            worldRenderer.render(camera.getCameraMatrix());
 
-        GL11.glViewport(0, 0, getWidth(), getHeight());
-        if (GL11.glIsEnabled(GL11.GL_CULL_FACE)) {
+            GL11.glPolygonMode(GL11.GL_FRONT_AND_BACK, GL11.GL_FILL);
+            GL11.glEnable(GL11.GL_CULL_FACE);
+        }else {
+
+            Vector3f lightDir = new Vector3f((float) Math.cos(time / 20), (float) Math.sin(time / 20), (float) Math.sin(time / 20) * 0.5f);
+            float darkness = (float) Math.max(0, Math.min(lightDir.y + 0.5, 1));
+
+            GL11.glViewport(0, 0, shadowres, shadowres);
+            GL11.glDisable(GL11.GL_CULL_FACE);
+            GL11.glDepthFunc(GL11.GL_LESS);
+            shadowmap.bind();
+            GL11.glClear(GL11.GL_DEPTH_BUFFER_BIT | GL11.GL_COLOR_BUFFER_BIT);
+            Matrix4f lightMatrix = new Matrix4f();
+            lightMatrix.ortho(-(shadowarea / 2), (shadowarea / 2), -(shadowarea / 2), (shadowarea / 2), 1, shadowdistance);
+            lightMatrix.lookAt(new Vector3f(lightDir).normalize().mul(0.6f * shadowdistance).add(playerpos), new Vector3f(playerpos), new Vector3f(0, 1, 0));
+            worldRenderer.render(lightMatrix);
+            playershadowshader.bind();
+            playershadowshader.setUniform("mvp", false, lightMatrix);
+            playershadowshader.setUniform("pos", playerpos);
+            GL11.glDrawArrays(GL11.GL_TRIANGLES, 0, 36);
+            shadowmap.unbind();
+            GL11.glEnable(GL11.GL_CULL_FACE);
+
+            GL11.glViewport(0, 0, getWidth(), getHeight());
+
             framebuffer.bind();
             GL11.glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT);
 
@@ -435,37 +423,34 @@ public class VoxelGameWindow extends GameWindow{
             GL11.glDrawArrays(GL11.GL_TRIANGLES, 0, 42);
             GL11.glDisable(GL11.GL_BLEND);
             GL11.glEnable(GL11.GL_DEPTH_TEST);
-        }
 
-        GL11.glDepthFunc(GL11.GL_LESS);
-        worldRenderer.render(camera, darkness, lightDir, shadowtex, lightMatrix);
 
-        if (thirdperson) {
-            playershader.bind();
-            playershader.setUniform("mvp", false, camera.getCameraMatrix());
-            playershader.setUniform("pos", playerpos);
-            GL11.glDrawArrays(GL11.GL_TRIANGLES, 0, 36);
-        }
+            GL11.glDepthFunc(GL11.GL_LESS);
+            worldRenderer.render(camera, darkness, lightDir, shadowtex, lightMatrix);
 
-        //if (targetBlock != null){
-        //    GL30.glBindVertexArray(emptyvao);
-        //    GL11.glDepthFunc(GL11.GL_LEQUAL);
-        //    GL11.glEnable(GL11.GL_BLEND);
-        //    GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
-        //    pickingshader.bind();
-        //    pickingshader.setUniform("mvp", false, camera.getCameraMatrix());
-        //    pickingshader.setUniform("pos", faceBlock);
-        //    GL31.glDrawArraysInstanced(GL11.GL_TRIANGLES, 0, 36, 1);
-//
-        //    GL11.glDepthFunc(GL11.GL_LESS);
-        //    GL11.glDisable(GL11.GL_BLEND);
-        //}
+            if (thirdperson) {
+                playershader.bind();
+                playershader.setUniform("mvp", false, camera.getCameraMatrix());
+                playershader.setUniform("pos", playerpos);
+                GL11.glDrawArrays(GL11.GL_TRIANGLES, 0, 36);
+            }
 
-        framebuffer.unbind();
+            if (targetBlock != null) {
+                GL30.glBindVertexArray(emptyvao);
+                GL11.glDepthFunc(GL11.GL_LEQUAL);
+                GL11.glEnable(GL11.GL_BLEND);
+                GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+                pickingshader.bind();
+                pickingshader.setUniform("mvp", false, camera.getCameraMatrix());
+                pickingshader.setUniform("pos", faceBlock);
+                GL31.glDrawArraysInstanced(GL11.GL_TRIANGLES, 0, 36, 1);
 
-        if (GL11.glIsEnabled(GL11.GL_CULL_FACE)) {
-            GL11.glViewport(0, 0, getWidth() / 4, getHeight() / 4);
-            blur.updateTargetTexture();
+                GL11.glDepthFunc(GL11.GL_LESS);
+                GL11.glDisable(GL11.GL_BLEND);
+            }
+
+            framebuffer.unbind();
+
 
             GL11.glViewport(0, 0, getWidth() / 8, getHeight() / 8);
             radialblurframebuffer.bind();
@@ -478,13 +463,11 @@ public class VoxelGameWindow extends GameWindow{
             radialblurframebuffer.unbind();
             GL11.glViewport(0, 0, getWidth(), getHeight());
 
-
             ppshader.bind();
-            radialblurtexture.bind(3);
+            radialblurtexture.bind(1);
             renderTexture.bind(0);
-            blur.getTargetTexture().bind(1);
-            depthTexture.bind(2);
             GL11.glDrawArrays(GL11.GL_TRIANGLES, 0, 6);
+
         }
 
         GL11.glDepthFunc(GL11.GL_ALWAYS);
@@ -492,9 +475,8 @@ public class VoxelGameWindow extends GameWindow{
         GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
 
         if (!getKeyboard().isKeyDown(Key.F1)) {
-            hudshader.bind();
-            GL11.glDrawArrays(GL11.GL_POINTS, 0, 1);
 
+            text.render("+", (getWidth()-30)/ 2, (getHeight() - 90) / 2, 1f, Color.WHITE, 0.75f);
             text.render(inventory[inventorySlot].getName(), 20, 10, 0.7f, Color.WHITE, 0.75f);
             text.render("F1: Keybindings", 20, getHeight() - 40, 0.4f, Color.WHITE, 0.75f);
 
@@ -504,7 +486,8 @@ public class VoxelGameWindow extends GameWindow{
                         text.getText("Pos: [" + ((float) Math.round(playerpos.x * 10) / 10) + "," + ((float) Math.round(playerpos.y * 10) / 10) + "," + ((float) Math.round(playerpos.z * 10) / 10) + "]", size),
                         text.getText("Camera: " + (thirdperson ? "Third" : "First") + "person", size),
                         text.getText("Physics: " + physics, size),
-                        text.getText("LookAt: " + (faceBlock != null ? worldRenderer.getWorld().getBlock(targetBlock).getName() : "-"), size),//worldRenderer.getWorld().getLightLevel(faceBlock)
+                        text.getText("LookAt: " + (targetBlock != null ? worldRenderer.getWorld().getBlock(targetBlock).getName() : "-"), size),
+                        text.getText("LightLevel: " + (faceBlock != null ? worldRenderer.getWorld().getLightLevel(faceBlock) : "-"), size),
                         text.getText("FPS: " + fps, size)
                 };
 
@@ -524,6 +507,7 @@ public class VoxelGameWindow extends GameWindow{
                     text.getText("Scroll: Change block", size),
                     text.getText("Middle: Pick block from the world", size),
                     text.getText("F6/F7/F8/F10: Toggle debug/camera/physics/wireframe", size),
+                    text.getText("F5: Reload World", size),
                     text.getText("Escape: Exit", size)
             };
 
@@ -544,7 +528,6 @@ public class VoxelGameWindow extends GameWindow{
 
         GL30.glDeleteVertexArrays(emptyvao);
 
-        hudshader.delete();
         ppshader.delete();
         glowtexture.delete();
         skyboxShader.delete();
@@ -570,8 +553,6 @@ public class VoxelGameWindow extends GameWindow{
 
         radialblurframebuffer.delete();
         radialblurtexture.delete();
-
-        blur.delete();
     }
 
     @Override
@@ -582,7 +563,6 @@ public class VoxelGameWindow extends GameWindow{
         ppshader.bind();
         ppshader.setUniform("screen", (float)getWidth(), (float)getHeight());
         text.resize(width, height);
-        blur.resize(width/4, height/4);
         radialblurtexture.resize(width/8, height/8);
         renderTexture2.resize(width, height);
     }

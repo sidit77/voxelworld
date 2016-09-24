@@ -117,11 +117,11 @@ public class World {
     }
 
     public int getLightLevel(int x, int y, int z){
-        return 0;//chunk.getLightLevel(x, y, z);
+        return getChunkAt(x,y,z).getLightLevel(((x % Chunk.size) + Chunk.size) % Chunk.size, ((y % Chunk.size) + Chunk.size) % Chunk.size, ((z % Chunk.size) + Chunk.size) % Chunk.size);
     }
 
     public  int getLightLevel(Vector3f pos){
-        return 0;//getLightLevel(Math.round(pos.x), Math.round(pos.y), Math.round(pos.z));
+        return getLightLevel(Math.round(pos.x), Math.round(pos.y), Math.round(pos.z));
     }
 
     public void recalculateLighting(){

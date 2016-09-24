@@ -15,7 +15,6 @@ public class WorldRenderer {
 
     private GLSLProgram shader;
     private GLSLProgram shadowshader;
-    private boolean fog = false;
 
     private Texture2D colortexture;
 
@@ -48,16 +47,6 @@ public class WorldRenderer {
 
     public World getWorld(){
         return world;
-    }
-
-    public boolean isFogEnabled(){
-        return fog;
-    }
-
-    public void setFog(boolean fog){
-        this.fog = fog;
-        shader.bind();
-        shader.setUniform("fog", fog ? 1 : 0);
     }
 
     public void render(Camera camera, float darkness, Vector3f lightDir, EmptyTexture2D shadowmap, Matrix4f lightmatrix){
