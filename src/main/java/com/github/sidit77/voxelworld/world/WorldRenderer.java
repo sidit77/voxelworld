@@ -37,7 +37,7 @@ public class WorldRenderer {
         colortexture.setLODBias(-0.5f);
 
 
-        world = new World(14,6,14, new DefaultWorldGenerator(System.nanoTime()));
+        world = new World(16,6,16, new DefaultWorldGenerator(System.nanoTime()));
 
     }
 

@@ -3,6 +3,8 @@ package com.github.sidit77.voxelworld;
 import com.github.sidit77.voxelworld.gui.text.Font;
 import com.github.sidit77.voxelworld.gui.text.Text;
 import com.github.sidit77.voxelworld.gui.text.TextRenderer;
+import com.github.sidit77.voxelworld.openal.AudioBuffer;
+import com.github.sidit77.voxelworld.openal.AudioSource;
 import com.github.sidit77.voxelworld.opengl.framebuffer.FrameBuffer;
 import com.github.sidit77.voxelworld.opengl.framebuffer.RenderBuffer;
 import com.github.sidit77.voxelworld.opengl.shader.GLSLProgram;
@@ -23,6 +25,9 @@ import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 import org.lwjgl.BufferUtils;
+import org.lwjgl.openal.AL10;
+import org.lwjgl.openal.ALContext;
+import org.lwjgl.openal.ALDevice;
 import org.lwjgl.opengl.*;
 
 import java.nio.IntBuffer;
@@ -87,13 +92,32 @@ public class VoxelGameWindow extends GameWindow{
 
     private Vector3f playerpos;
     private float velocity = 0;
+    private boolean inAir = false;
 
     private CharacterModel playermodel;
+
+    private ALContext context;
+    private ALDevice device;
+
+    private AudioBuffer blockplacebuffer;
+    private AudioSource blockplacesource;
+
+    private AudioBuffer blockbreakbuffer;
+    private AudioSource blockbreaksource;
+
+    private AudioBuffer walkingbuffer;
+    private AudioSource walkingsource;
+
+    private AudioBuffer fallingbuffer;
+    private AudioSource fallingsource;
 
     @Override
     public void load() {
 
         System.out.println(GL11.glGetString(GL11.GL_VERSION));
+
+        context = ALContext.create();
+        device = context.getDevice();
 
         GL11.glClearColor(0.5f, 0.5f, 0.5f, 1);
         GL11.glEnable(GL11.GL_DEPTH_TEST);
@@ -150,11 +174,16 @@ public class VoxelGameWindow extends GameWindow{
                 }
                 if(button == MouseButton.Left && targetBlock != null) {
                     worldRenderer.getWorld().setBlock(targetBlock, Blocks.AIR);
+                    blockbreaksource.setPosition(targetBlock);
+                    blockbreaksource.play();
                 }
                 if(button == MouseButton.Right && faceBlock != null) {
                     worldRenderer.getWorld().setBlock(faceBlock, inventory[inventorySlot]);
                     if(physics && !canMoveTo(playerpos)){
                         worldRenderer.getWorld().setBlock(faceBlock, Blocks.AIR);
+                    }else{
+                        blockplacesource.setPosition(faceBlock);
+                        blockplacesource.play();
                     }
                 }
             }
@@ -249,6 +278,17 @@ public class VoxelGameWindow extends GameWindow{
         }
         playerpos.add(0, 2.5f, 0);
 
+        blockplacebuffer = AudioBuffer.fromFile("assets/sound/blockplace.wav");
+        blockplacesource = new AudioSource().setBuffer(blockplacebuffer).setVolume(250.0f).setVelocity(0,0,0);;
+
+        blockbreakbuffer = AudioBuffer.fromFile("assets/sound/blockbreak.wav");
+        blockbreaksource = new AudioSource().setBuffer(blockbreakbuffer).setVolume(250.0f).setVelocity(0,0,0);
+
+        walkingbuffer = AudioBuffer.fromFile("assets/sound/walking.wav");
+        walkingsource = new AudioSource().setBuffer(walkingbuffer).setVelocity(0,0,0).setLooping(true).play();
+
+        fallingbuffer = AudioBuffer.fromFile("assets/sound/fall.wav");
+        fallingsource = new AudioSource().setBuffer(fallingbuffer).setVelocity(0,0,0);
     }
 
     @Override
@@ -264,6 +304,7 @@ public class VoxelGameWindow extends GameWindow{
             if(getKeyboard().isKeyDown(Key.D))        playerpos.add(camera.getRight().mul(1,0,1).normalize().mul(speed));
             if(getKeyboard().isKeyDown(Key.Space))    playerpos.add( 0, speed, 0);
             if(getKeyboard().isKeyDown(Key.LeftShift))playerpos.add( 0,-speed, 0);
+            walkingsource.setVolume(0);
         }else {
             //TODO check at higher velocitys
             velocity -= 0.01f * time * 60;
@@ -278,6 +319,20 @@ public class VoxelGameWindow extends GameWindow{
 
             if(dir.length() != 0) dir.normalize();
             dir.mul(getKeyboard().isKeyDown(Key.LeftShift) ? 0.15f : 0.1f);
+
+            walkingsource.setPosition(playerpos);
+            if(!canMoveTo(new Vector3f(playerpos).sub(0,0.5f,0))){
+                walkingsource.setVolume(250);
+                if(inAir){
+                    fallingsource.setPosition(playerpos).setVolume(50.0f * Math.max(0, -velocity - 0.3f)).play();
+                }
+                inAir = false;
+            }else{
+                walkingsource.setVolume(0);
+                inAir = true;
+            }
+            walkingsource.setPitch(dir.length() * 10);
+
             dir.add(0, velocity, 0);
             dir.mul(60 * (float)time);
 
@@ -294,6 +349,9 @@ public class VoxelGameWindow extends GameWindow{
             }
 
         }
+
+        AL10.alListener3f(AL10.AL_POSITION, camera.getPosition().x, camera.getPosition().y,camera.getPosition().z);
+        AL10.alListener3f(AL10.AL_VELOCITY, camera.getForward().x, camera.getForward().y, camera.getForward().z);
 
         if(!getMouse().isCursorEnabled()){
             camera.addRotation(getMouse().getDeltaMouseX()/(float)(getWidth()/2), -getMouse().getDeltaMouseY()/(float)(getHeight()/2));
@@ -319,7 +377,7 @@ public class VoxelGameWindow extends GameWindow{
         faceBlock = null;
         for(float i = 0; i < 10; i += 0.5f){
             pos.add(step);
-            if(worldRenderer.getWorld().getBlock(pos) != Blocks.AIR){
+            if(!worldRenderer.getWorld().getBlock(pos).isUnrendered()){
                 int bx = Math.round(pos.x);
                 int by = Math.round(pos.y);
                 int bz = Math.round(pos.z);
@@ -440,6 +498,7 @@ public class VoxelGameWindow extends GameWindow{
 
                 GL11.glDepthFunc(GL11.GL_LESS);
                 GL11.glDisable(GL11.GL_BLEND);
+
             }
 
             framebuffer.unbind();
@@ -545,6 +604,21 @@ public class VoxelGameWindow extends GameWindow{
 
         radialblurframebuffer.delete();
         radialblurtexture.delete();
+
+        blockplacebuffer.delete();
+        blockplacesource.delete();
+
+        blockbreaksource.delete();
+        blockbreakbuffer.delete();
+
+        walkingsource.delete();
+        walkingbuffer.delete();
+
+        fallingsource.delete();
+        fallingbuffer.delete();
+
+        context.destroy();
+        device.destroy();
     }
 
     @Override
