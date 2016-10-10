@@ -35,7 +35,21 @@ public class Blocks {
     public static final Block BRICKS = new Block(0, "Bricks");
     public static final Block STONEBRICKS = new Block(5, "Stonebricks");
     public static final Block WOOD = new Block(8, "Wood").setTexture(Direction.UP, 9).setTexture(Direction.DOWN, 9);
-    public static final Block LEAF = new Block(7, "Leaf");
+    public static final Block SAND = new Block(15, "Sand");
+    public static final Block COBBLESTONE = new Block(13, "Cobblestone");
+    public static final Block DIRT = new Block(12, "Dirt");
+    public static final Block LANTERN = new LanternBlock();
+    public static final Block LEAF = new Block(7, "Leaf"){
+        @Override
+        public boolean isSolid(Direction direction) {
+            return false;
+        }
+
+        @Override
+        public boolean isOpaque() {
+            return false;
+        }
+    };
     public static final Block GLASS = new Block(10, "Glass"){
 
         @Override

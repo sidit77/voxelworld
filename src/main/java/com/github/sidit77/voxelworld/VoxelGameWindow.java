@@ -39,7 +39,7 @@ public class VoxelGameWindow extends GameWindow{
     private static final int shadowdistance = 80;
 
     public VoxelGameWindow(boolean fullscreen, boolean playmode) {
-        super("Voxel Game", fullscreen ? -1 : 1280, fullscreen ? -1 : 720, fullscreen, 4, 0);
+        super("TITAMC (This Is Totally A Minecraft Clone)", fullscreen ? -1 : 1280, fullscreen ? -1 : 720, fullscreen, 4, 0);
         if(fullscreen){
             this.getMouse().setCursor(false);
         }
@@ -52,7 +52,7 @@ public class VoxelGameWindow extends GameWindow{
     private int emptyvao;
 
     private int inventorySlot = 0;
-    private Block[] inventory = {Blocks.GRASS, Blocks.STONE, Blocks.WOOL, Blocks.STONEBRICKS, Blocks.BRICKS, Blocks.WOOD, Blocks.LEAF, Blocks.TORCH, Blocks.GLASS};
+    private Block[] inventory = {Blocks.GRASS, Blocks.STONE, Blocks.WOOL, Blocks.STONEBRICKS, Blocks.BRICKS, Blocks.WOOD, Blocks.LEAF, Blocks.TORCH, Blocks.GLASS, Blocks.COBBLESTONE, Blocks.DIRT, Blocks.LANTERN, Blocks.SAND};
 
     private WorldRenderer worldRenderer;
     private Vector3f targetBlock;

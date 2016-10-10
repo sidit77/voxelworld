@@ -47,38 +47,32 @@ public class Chunk extends WorldElement{
                         }else {
                             for (Direction d : Direction.values()) {
                                 if (!getBlock(cx + d.getXOffset(), cy + d.getYOffset(), cz + d.getZOffset()).isSolid(Direction.getOpposite(d))) {
-                                    float[] f = faces[d.getID()];
-                                    for (int j = 0; j < f.length; j += 5) {
-                                        vlist.add(f[j + 0] + x + cx);
-                                        vlist.add(f[j + 1] + y + cy);
-                                        vlist.add(f[j + 2] + z + cz);
-                                        vlist.add(blocks[cx][cy][cz].getTextureID(d) % 4 * 0.25f + f[j + 3] * 0.25f);
-                                        vlist.add(blocks[cx][cy][cz].getTextureID(d) / 4 * 0.25f + f[j + 4] * 0.25f);
+                                    float[][] f = faces[d.getID()];
+
+                                    float[] ao = new float[4];
+                                    float[] ll = new float[4];
+                                    for(int j = 0; j < 4; j++){
+                                        for(int i = 0; i < 4; i++){
+                                            int[] offsets = {0,0,0};
+                                            offsets[smoothlight[d.getID()][0]] = (i / 2) * (int)Math.signum(f[j][smoothlight[d.getID()][0]]);
+                                            offsets[smoothlight[d.getID()][1]] = (i % 2) * (int)Math.signum(f[j][smoothlight[d.getID()][1]]);
+                                            ao[j] += (getBlock(cx + d.getXOffset() + offsets[0], cy + d.getYOffset() + offsets[1], cz + d.getZOffset() + offsets[2]).isOpaque() ? 0.0f : 0.25f);
+                                            ll[j] += (float)getLightLevel(cx + d.getXOffset() + offsets[0], cy + d.getYOffset() + offsets[1], cz + d.getZOffset() + offsets[2]) / (16 * 4);
+                                        }
+                                    }
+
+                                    for (int j : order[ao[1] + ao[3] > ao[0] + ao[2] ? 1 : 0]) {
+                                        vlist.add(f[j][0] + x + cx);
+                                        vlist.add(f[j][1] + y + cy);
+                                        vlist.add(f[j][2] + z + cz);
+                                        vlist.add(blocks[cx][cy][cz].getTextureID(d) % 4 * 0.25f + f[j][3] * 0.25f);
+                                        vlist.add(blocks[cx][cy][cz].getTextureID(d) / 4 * 0.25f + f[j][4] * 0.25f);
                                         vlist.add(d.asVector().x);
                                         vlist.add(d.asVector().y);
                                         vlist.add(d.asVector().z);
 
-                                        //vlist.add((float)getLightLevel(cx + d.getXOffset(), cy + d.getYOffset(), cz + d.getZOffset()) / 16);
-
-                                        //float ll = 0;
-                                        //for(int i = 0; i < 4; i++){
-                                        //    int[] offsets = {0,0,0};
-                                        //    offsets[smoothlight[d.getID()][0]] = (i / 2) * (int)Math.signum(f[j + smoothlight[d.getID()][0]]);
-                                        //    offsets[smoothlight[d.getID()][1]] = (i % 2) * (int)Math.signum(f[j + smoothlight[d.getID()][1]]);
-                                        //    ll += (float)getLightLevel(cx + d.getXOffset() + offsets[0], cy + d.getYOffset() + offsets[1], cz + d.getZOffset() + offsets[2]) / (16 * 4);
-                                        //}
-
-                                        float ao = 0;
-                                        float ll = 0;
-                                        for(int i = 0; i < 4; i++){
-                                            int[] offsets = {0,0,0};
-                                            offsets[smoothlight[d.getID()][0]] = (i / 2) * (int)Math.signum(f[j + smoothlight[d.getID()][0]]);
-                                            offsets[smoothlight[d.getID()][1]] = (i % 2) * (int)Math.signum(f[j + smoothlight[d.getID()][1]]);
-                                            ao += (getBlock(cx + d.getXOffset() + offsets[0], cy + d.getYOffset() + offsets[1], cz + d.getZOffset() + offsets[2]).isOpaque() ? 0.0f : 0.25f);
-                                            ll += (float)getLightLevel(cx + d.getXOffset() + offsets[0], cy + d.getYOffset() + offsets[1], cz + d.getZOffset() + offsets[2]) / (16 * 4);
-                                        }
-                                        vlist.add(ll);
-                                        vlist.add(ao);
+                                        vlist.add(ll[j]);
+                                        vlist.add(ao[j]);
                                     }
                                 }
                             }
@@ -125,6 +119,9 @@ public class Chunk extends WorldElement{
         }
         if(z >= size){
             return front.getLightLevel(x, y, z - size);
+        }
+        if(blocks[x][y][z] instanceof ILightSource){
+            return (byte)Math.max(lightmap[x][y][z], ((ILightSource)blocks[x][y][z]).getLightLevel());
         }
         return lightmap[x][y][z];
     }
@@ -231,10 +228,18 @@ public class Chunk extends WorldElement{
                 lightRemoveQueue.add(new LightRemovalNode(x,y,z, l));
             }
             if(b instanceof ILightSource){
-                lightmap[x][y][z] = (byte)Math.max(lightmap[x][y][z], ((ILightSource)b).getLightLevel());
+                byte ol = lightmap[x][y][z];
+                byte nl = ((ILightSource)b).getLightLevel();
+                lightmap[x][y][z] = b.isOpaque() ? nl : (byte)Math.max(nl, ol);
+                //if(nl >= ol){
+                //    lightQueue.add(new LightNode(x,y,z));
+                //}else{
+                //   lightRemoveQueue.add(new LightRemovalNode(x,y,z,ol));
+                //}
+                lightRemoveQueue.add(new LightRemovalNode(x,y,z,ol));
                 lightQueue.add(new LightNode(x,y,z));
             }
-            if(b.isOpaque() && !old.isOpaque()){
+            if(b.isOpaque() && !old.isOpaque() && !(b instanceof ILightSource)){
                 byte l = lightmap[x][y][z];
                 lightmap[x][y][z] = 0;
                 lightRemoveQueue.add(new LightRemovalNode(x,y,z, l));
@@ -324,11 +329,12 @@ public class Chunk extends WorldElement{
 
             for(Direction d : Direction.values()){
                 byte neighborlevel = getLightLevel(node.getX() + d.getXOffset(), node.getY() + d.getYOffset(), node.getZ() + d.getZOffset());
+                boolean isls = getBlock(node.getX() + d.getXOffset(), node.getY() + d.getYOffset(), node.getZ() + d.getZOffset()) instanceof ILightSource;
 
-                if(neighborlevel != 0 && neighborlevel < node.getVal()){
+                if(neighborlevel != 0 && neighborlevel < node.getVal() && !isls){
                     setLightLevel(node.getX() + d.getXOffset(), node.getY() + d.getYOffset(), node.getZ() + d.getZOffset(), (byte)0);
                     lightRemoveQueue.add(new LightRemovalNode(node.getX() + d.getXOffset(), node.getY() + d.getYOffset(), node.getZ() + d.getZOffset(), neighborlevel));
-                }else if(neighborlevel >= node.getVal()){
+                }else if(neighborlevel >= node.getVal() || isls){
                     lightQueue.add(new LightNode(node.getX() + d.getXOffset(), node.getY() + d.getYOffset(), node.getZ() + d.getZOffset()));
                 }
             }
@@ -403,58 +409,51 @@ public class Chunk extends WorldElement{
         }
     }
 
-    float[][] faces = {
+    private static final int[][] order = {
+            {0, 1, 2, 2, 3, 0},
+            {1, 2, 3, 3, 0, 1}
+    };
+
+    private static final float[][][] faces = {
             {
-                    -0.5f, -0.5f,  0.5f, 0, 1,
-                    0.5f, -0.5f,  0.5f,  1, 1,
-                    0.5f,  0.5f,  0.5f,  1, 0,
-                    0.5f,  0.5f,  0.5f,  1, 0,
-                    -0.5f,  0.5f,  0.5f, 0, 0,
-                    -0.5f, -0.5f,  0.5f, 0, 1
+                    {-0.5f, -0.5f,  0.5f, 0, 1},
+                    {0.5f, -0.5f,  0.5f,  1, 1},
+                    {0.5f,  0.5f,  0.5f,  1, 0},
+                    {-0.5f,  0.5f,  0.5f, 0, 0}
             },
             {
-                    0.5f, -0.5f,  0.5f,0, 1,
-                    0.5f, -0.5f, -0.5f,1, 1,
-                    0.5f,  0.5f, -0.5f,1, 0,
-                    0.5f,  0.5f, -0.5f,1, 0,
-                    0.5f,  0.5f,  0.5f,0, 0,
-                    0.5f, -0.5f,  0.5f,0, 1
+                    {0.5f, -0.5f,  0.5f,0, 1},
+                    {0.5f, -0.5f, -0.5f,1, 1},
+                    {0.5f,  0.5f, -0.5f,1, 0},
+                    {0.5f,  0.5f,  0.5f,0, 0}
             },
             {
-                    0.5f, -0.5f, -0.5f,0, 1,
-                    -0.5f, -0.5f, -0.5f,1,1,
-                    -0.5f,  0.5f, -0.5f,1,0,
-                    -0.5f,  0.5f, -0.5f,1,0,
-                    0.5f,  0.5f, -0.5f,0, 0,
-                    0.5f, -0.5f, -0.5f,0, 1
+                    {0.5f, -0.5f, -0.5f,0, 1},
+                    {-0.5f, -0.5f, -0.5f,1,1},
+                    {-0.5f,  0.5f, -0.5f,1,0},
+                    {0.5f,  0.5f, -0.5f,0, 0}
             },
             {
-                    -0.5f, -0.5f, -0.5f,0, 1,
-                    -0.5f, -0.5f,  0.5f,1, 1,
-                    -0.5f,  0.5f,  0.5f,1, 0,
-                    -0.5f,  0.5f,  0.5f,1, 0,
-                    -0.5f,  0.5f, -0.5f,0, 0,
-                    -0.5f, -0.5f, -0.5f,0, 1
+                    {-0.5f, -0.5f, -0.5f,0, 1},
+                    {-0.5f, -0.5f,  0.5f,1, 1},
+                    {-0.5f,  0.5f,  0.5f,1, 0},
+                    {-0.5f,  0.5f, -0.5f,0, 0}
             },
             {
-                    -0.5f,  0.5f,  0.5f,0,1,
-                    0.5f,  0.5f,  0.5f,1, 1,
-                    0.5f,  0.5f, -0.5f,1, 0,
-                    0.5f,  0.5f, -0.5f,1, 0,
-                    -0.5f,  0.5f, -0.5f,0,0,
-                    -0.5f,  0.5f,  0.5f,0,1
+                    {-0.5f,  0.5f,  0.5f,0,1},
+                    {0.5f,  0.5f,  0.5f,1, 1},
+                    {0.5f,  0.5f, -0.5f,1, 0},
+                    {-0.5f,  0.5f, -0.5f,0,0}
             },
             {
-                    0.5f, -0.5f,  0.5f,0, 1,
-                    -0.5f, -0.5f,  0.5f,1,1,
-                    -0.5f, -0.5f, -0.5f,1,0,
-                    -0.5f, -0.5f, -0.5f,1,0,
-                    0.5f, -0.5f, -0.5f,0, 0,
-                    0.5f, -0.5f,  0.5f,0, 1
+                    {0.5f, -0.5f,  0.5f,0, 1},
+                    {-0.5f, -0.5f,  0.5f,1,1},
+                    {-0.5f, -0.5f, -0.5f,1,0},
+                    {0.5f, -0.5f, -0.5f,0, 0}
             }
     };
 
-    int[][] smoothlight = {
+    private static final int[][] smoothlight = {
         {0,1},
         {1,2},
         {0,1},

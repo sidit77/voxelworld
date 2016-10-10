@@ -31,13 +31,13 @@ public class WorldRenderer {
                 .attachShaderAndDelete(GLSLShader.fromFile("assets/shader/worldv3/shadow/Fragment.glsl", GL20.GL_FRAGMENT_SHADER))
                 .link();
 
-        colortexture = Texture2D.fromFile("assets/texture/Atlas.png");
+        colortexture = Texture2D.fromFile("assets/texture/Atlas2.png");
         colortexture.setFiltering(GL11.GL_NEAREST_MIPMAP_LINEAR, GL11.GL_NEAREST);
         colortexture.setWarpMode(GL12.GL_CLAMP_TO_EDGE);
         colortexture.setLODBias(-0.5f);
 
 
-        world = new World(16,6,16, new DefaultWorldGenerator(System.nanoTime()));
+        world = new World(16,7,16, new DefaultWorldGenerator(System.nanoTime()));
 
     }
 
