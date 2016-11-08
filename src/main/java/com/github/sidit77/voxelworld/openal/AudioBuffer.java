@@ -6,6 +6,10 @@ import java.nio.ByteBuffer;
 
 public class AudioBuffer {
 
+    /**
+     * A simple wrapper around an OpenAL buffer object.
+     */
+
     private int id;
 
     public AudioBuffer(int format, ByteBuffer data, int frequency){

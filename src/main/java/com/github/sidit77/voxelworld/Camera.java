@@ -4,6 +4,8 @@ import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
+//A class that represents a Camera and is capable a creating a various transform matrices based on this camera
+
 public class Camera {
 
     private static final Vector3f up = new Vector3f(0,1,0);

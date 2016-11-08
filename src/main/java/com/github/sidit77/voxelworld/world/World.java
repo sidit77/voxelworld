@@ -14,8 +14,12 @@ public class World {
     private WorldElement[][][] chunks;
     private int vao, vbo, vs;
     private boolean update = true;
+    private int x = 0,y = 0,z = 0;
+    private int viewdistance;
 
-    public World(int dimX, int dimY, int dimZ, IWorldGenerator generator){
+    public World(int dimX, int dimY, int dimZ, IWorldGenerator generator, int viewdistance){
+        this.viewdistance = viewdistance;
+        //The chunk array has to be bigger specified because the first and last chunk in each direction will be a dummy chunk
         chunks = new WorldElement[dimX + 2][dimY + 2][dimZ + 2];
 
         for(int x = 0; x < dimX + 2; x++){
@@ -30,6 +34,7 @@ public class World {
             }
         }
 
+        //Set the neighbor references for each "real" chunk
         for(int x = 1; x < dimX + 1; x++){
             for(int y = 1; y < dimY + 1; y++){
                 for(int z = 1; z < dimZ + 1; z++){
@@ -43,10 +48,13 @@ public class World {
             }
         }
 
+        //Initialize the chunks the with default terrain values from the terrain generator
+        //for each chunk....
         for(int x = 1; x < dimX + 1; x++) {
             for (int y = 1; y < dimY + 1; y++) {
                 for (int z = 1; z < dimZ + 1; z++) {
 
+                    //for each block....
                     for(int x2 = 0; x2 < Chunk.size; x2++) {
                         for (int y2 = 0; y2 < Chunk.size; y2++) {
                             for (int z2 = 0; z2 < Chunk.size; z2++) {
@@ -61,10 +69,13 @@ public class World {
 
         System.out.println("Finished generate");
 
+        //Add additional details like trees to the world
+        //for each chunk....
         for(int x = 1; x < dimX + 1; x++) {
             for (int y = 1; y < dimY + 1; y++) {
                 for (int z = 1; z < dimZ + 1; z++) {
 
+                    //for each block....
                     for(int x2 = 0; x2 < Chunk.size; x2++) {
                         for (int y2 = 0; y2 < Chunk.size; y2++) {
                             for (int z2 = 0; z2 < Chunk.size; z2++) {
@@ -79,6 +90,8 @@ public class World {
 
         System.out.println("Finished postgenerate");
 
+        //enable and calculate lighting for the world
+        //this has to be called after the world generation to prevent a unnecessary slowdown
         for(int x = 1; x < dimX + 1; x++) {
             for (int y = 1; y < dimY + 1; y++) {
                 for (int z = 1; z < dimZ + 1; z++) {
@@ -87,6 +100,17 @@ public class World {
             }
         }
 
+        //This is not necessary, but it helps to prevent small lag spikes
+        for(int x = 1; x < dimX + 1; x++) {
+            for (int y = 1; y < dimY + 1; y++) {
+                for (int z = 1; z < dimZ + 1; z++) {
+                    chunks[x][y][z].generateMesh(x * Chunk.size, y * Chunk.size, z * Chunk.size);
+                }
+            }
+        }
+
+
+        //OpenGL buffer stuff
         vao = GL30.glGenVertexArrays();
         vbo = GL15.glGenBuffers();
 
@@ -166,19 +190,26 @@ public class World {
             for (int x = 0; x < chunks.length; x++) {
                 for (int y = 0; y < chunks[0].length; y++) {
                     for (int z = 0; z < chunks[0][0].length; z++) {
-                        if (chunks[x][y][z].updateRequired()) {
-                            chunks[x][y][z].generateMesh(x * Chunk.size, y * Chunk.size, z * Chunk.size);
+                        //check if the chunk is in range
+                        if(viewdistance < 0 || (this.x - x)*(this.x - x) + (this.y - y)*(this.y - y) + (this.z - z)*(this.z - z) <= viewdistance * viewdistance) {
+                            if (chunks[x][y][z].updateRequired()) {
+                                chunks[x][y][z].generateMesh(x * Chunk.size, y * Chunk.size, z * Chunk.size);
+                            }
+                            vs += chunks[x][y][z].getMesh().length;
                         }
-                        vs += chunks[x][y][z].getMesh().length;
                     }
                 }
             }
 
+
+            //Create a big mesh that contains all the small chunk meshes and send it to the gpu
             FloatBuffer verticesBuffer = BufferUtils.createFloatBuffer(vs);
             for (int x = 0; x < chunks.length; x++) {
                 for (int y = 0; y < chunks[0].length; y++) {
                     for (int z = 0; z < chunks[0][0].length; z++) {
-                        verticesBuffer.put(chunks[x][y][z].getMesh());
+                        if(viewdistance < 0 || (this.x - x)*(this.x - x) + (this.y - y)*(this.y - y) + (this.z - z)*(this.z - z) <= viewdistance * viewdistance) {
+                            verticesBuffer.put(chunks[x][y][z].getMesh());
+                        }
                     }
                 }
             }
@@ -189,6 +220,24 @@ public class World {
             GL15.glBufferData(GL15.GL_ARRAY_BUFFER, verticesBuffer, GL15.GL_DYNAMIC_DRAW);
             update = false;
         }
+    }
+
+    public void setViewDistance(int d){
+        this.viewdistance = d;
+        this.update = true;
+    }
+
+    public int getViewDistance(){
+        return viewdistance;
+    }
+
+    public void setPosition(int x, int y, int z){
+        if((this.x != x || this.y != y || this.z != z) && viewdistance >= 0){
+            update = true;
+        }
+        this.x = x;
+        this.y = y;
+        this.z = z;
     }
 
     public void draw(){

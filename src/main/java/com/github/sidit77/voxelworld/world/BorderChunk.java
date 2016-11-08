@@ -2,7 +2,19 @@ package com.github.sidit77.voxelworld.world;
 
 public class BorderChunk extends WorldElement {
 
-    private BorderBlock borderBlock = new BorderBlock();
+    //This is a special chunk which creates walls around the world and prevents null checks
+
+    private Block borderBlock = new Block(-1, "WorldBorder"){
+        @Override
+        public boolean isSolid(Direction direction) {
+            return true;
+        }
+
+        @Override
+        public boolean isUnrendered() {
+            return true;
+        }
+    };
 
     @Override
     public void setBlock(int x, int y, int z, Block b) {
@@ -79,23 +91,6 @@ public class BorderChunk extends WorldElement {
     @Override
     public void setLighting(boolean enabled) {
 
-    }
-
-    private class BorderBlock extends Block{
-
-        public BorderBlock() {
-            super(-1, "WorldBorder");
-        }
-
-        @Override
-        public boolean isSolid(Direction direction) {
-            return true;
-        }
-
-        @Override
-        public boolean isUnrendered() {
-            return true;
-        }
     }
 
 }

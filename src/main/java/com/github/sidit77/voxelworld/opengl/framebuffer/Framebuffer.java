@@ -6,6 +6,10 @@ import org.lwjgl.opengl.GL30;
 
 public class FrameBuffer {
 
+    /**
+     * A simple wrapper around an OpenGL Framebuffer object.
+     */
+
     public int id;
 
     public FrameBuffer(){

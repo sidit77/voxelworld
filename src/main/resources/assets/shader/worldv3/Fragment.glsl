@@ -75,6 +75,9 @@ void main() {
 
     shadow = clamp(shadow, 0.0, 1.0);
 
+    if(length(projCoords - 0.5) > 0.6)
+        shadow = 1;
+
     float sunlight = shadow * darkness * max(0.5, dot(normalize(fs_in.normal), normalize(lightDir)));//darkness *
     color0 = texture(colortexture, fs_in.uv);//dot(fs_in.normal, normalize(vec3(0.5,1,1)))
 

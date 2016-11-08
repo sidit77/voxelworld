@@ -9,6 +9,8 @@ import org.lwjgl.system.MemoryUtil;
 
 public abstract class GameWindow {
 
+    //An abstract class to create a window
+
     private static int numberofwindows = 0;
     private static GLFWErrorCallback errorCallback;
 
@@ -58,6 +60,7 @@ public abstract class GameWindow {
 
     public GameWindow(String title, int width, int height, boolean fullscreen, int major, int minor){
 
+        //Initialize GLFW if it isn't already initialized
         if(numberofwindows <= 0){
             GLFW.glfwSetErrorCallback(errorCallback = GLFWErrorCallback.createPrint(System.err));
             if (GLFW.glfwInit() != GL11.GL_TRUE)
@@ -65,6 +68,7 @@ public abstract class GameWindow {
         }
         numberofwindows++;
 
+        //Set the desired windows hints
         GLFW.glfwDefaultWindowHints();
         GLFW.glfwWindowHint(GLFW.GLFW_VISIBLE, GL11.GL_FALSE);
         GLFW.glfwWindowHint(GLFW.GLFW_RESIZABLE, GL11.GL_TRUE);
@@ -80,6 +84,7 @@ public abstract class GameWindow {
         this.resized = false;
         this.title = title;
 
+        //Create the window
         windowid = GLFW.glfwCreateWindow(this.width, this.height, title, fullscreen ? GLFW.glfwGetPrimaryMonitor() : MemoryUtil.NULL, MemoryUtil.NULL);
         GLFW.glfwSetFramebufferSizeCallback(windowid, sizeCallback);
         GLFW.glfwSetWindowPosCallback(windowid, posCallback);
@@ -99,11 +104,14 @@ public abstract class GameWindow {
     }
 
     public void run(){
+
+        //Prepare for the main loop
         GLFW.glfwMakeContextCurrent(windowid);
         GLFW.glfwShowWindow(windowid);
         GL.createCapabilities();
-        GLFW.glfwSetTime(0);
         load();
+        GLFW.glfwSetTime(0);
+        //The main loop
         while (GLFW.glfwWindowShouldClose(windowid) == GLFW.GLFW_FALSE) {
             double time = GLFW.glfwGetTime();
             GLFW.glfwSetTime(0);
@@ -122,6 +130,8 @@ public abstract class GameWindow {
             GLFW.glfwSwapBuffers(windowid);
             GLFW.glfwPollEvents();
         }
+
+        //Clean everything up
         destroy();
 
         sizeCallback.release();
@@ -132,6 +142,7 @@ public abstract class GameWindow {
 
         GLFW.glfwDestroyWindow(windowid);
 
+        //Close GLFW if needed
         numberofwindows--;
         if(numberofwindows <= 0){
             GLFW.glfwTerminate();

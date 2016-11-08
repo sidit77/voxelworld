@@ -84,7 +84,7 @@ public class VoxelGameWindow extends GameWindow{
     private FrameBuffer radialblurframebuffer;
     private EmptyTexture2D radialblurtexture;
 
-    private boolean physics = false;
+    private boolean physics = true;
     private boolean thirdperson = false;
     private boolean debug = false;
     private boolean wireframe = false;
@@ -142,6 +142,9 @@ public class VoxelGameWindow extends GameWindow{
             }
             if(key == Key.F10 && action == Action.Press){
                 wireframe = !wireframe;
+            }
+            if(key == Key.F9 && action == Action.Press){
+                worldRenderer.getWorld().setViewDistance(worldRenderer.getWorld().getViewDistance() < 0 ? 6 : -1);
             }
             if(key == Key.F8 && action == Action.Press){
                 physics = !physics;
@@ -367,7 +370,7 @@ public class VoxelGameWindow extends GameWindow{
             camera.getPosition().set(new Vector3f(playerpos).add(camera.getBack().mul(5)));
         }
 
-        worldRenderer.update();
+        worldRenderer.update(playerpos);
         this.time += time * (getKeyboard().isKeyDown(Key.Q) ? 10 : 0.3);
 
 
@@ -558,7 +561,7 @@ public class VoxelGameWindow extends GameWindow{
                     text.getText("Left/Right: Destroy/Place a block", size),
                     text.getText("Scroll: Change block", size),
                     text.getText("Middle: Pick block from the world", size),
-                    text.getText("F6/F7/F8/F10: Toggle debug/camera/physics/wireframe", size),
+                    text.getText("F6/F7/F8/F9/F10: Toggle debug/camera/physics/fullworld/wireframe", size),
                     text.getText("F5: Reload World", size),
                     text.getText("Escape: Exit", size)
             };

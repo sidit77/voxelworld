@@ -7,6 +7,10 @@ import org.lwjgl.opengl.GL14;
 
 public abstract class Texture {
 
+    /**
+     * A simple wrapper around an OpenGL Texture object.
+     */
+
     private int id;
     private int type;
 

@@ -21,6 +21,8 @@ public class WorldRenderer {
     private World world;
 
     public WorldRenderer(){
+
+        //load the required shader.
         shader = new GLSLProgram()
                 .attachShaderAndDelete(GLSLShader.fromFile("assets/shader/worldv3/Vertex.glsl", GL20.GL_VERTEX_SHADER))
                 .attachShaderAndDelete(GLSLShader.fromFile("assets/shader/worldv3/Fragment.glsl", GL20.GL_FRAGMENT_SHADER))
@@ -31,18 +33,19 @@ public class WorldRenderer {
                 .attachShaderAndDelete(GLSLShader.fromFile("assets/shader/worldv3/shadow/Fragment.glsl", GL20.GL_FRAGMENT_SHADER))
                 .link();
 
+        //load the texture
         colortexture = Texture2D.fromFile("assets/texture/Atlas2.png");
         colortexture.setFiltering(GL11.GL_NEAREST_MIPMAP_LINEAR, GL11.GL_NEAREST);
         colortexture.setWarpMode(GL12.GL_CLAMP_TO_EDGE);
         colortexture.setLODBias(-0.5f);
 
-
-        world = new World(16,7,16, new DefaultWorldGenerator(System.nanoTime()));
+        //create the world
+        world = new World(25,7,25, new DefaultWorldGenerator(System.nanoTime()), 6);
 
     }
 
-    public void update(){
-
+    public void update(Vector3f pos){
+        world.setPosition((int)Math.floor(pos.x / Chunk.size),(int)Math.floor(pos.y / Chunk.size),(int)Math.floor(pos.z / Chunk.size));
     }
 
     public World getWorld(){

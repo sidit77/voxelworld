@@ -4,6 +4,10 @@ import org.lwjgl.opengl.GL30;
 
 public class RenderBuffer {
 
+    /**
+     * A simple wrapper around an OpenGL Renderbuffer object.
+     */
+
     private int id;
     private int mode;
 

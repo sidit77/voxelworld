@@ -7,6 +7,10 @@ import java.nio.ByteBuffer;
 
 public class EmptyTexture2D extends Texture {
 
+    /**
+     * A simple wrapper around an OpenGL Texture object, that's used as framebuffer attachment.
+     */
+
     private int mode;
     private int internalmode;
 

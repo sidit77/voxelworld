@@ -8,9 +8,12 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 
+//This class can read a .obj file and return it as renderable float array.
+
 public class ObjLoader {
 
     public static float[] loadMesh(String path){
+        //Some lists for relevant vertex information from the file
         List<Float[]> positions = new ArrayList<>();
         List<Float[]> normals = new ArrayList<>();
         List<Float[]> uvs = new ArrayList<>();
@@ -19,20 +22,25 @@ public class ObjLoader {
 
         try(BufferedReader reader = new BufferedReader(new InputStreamReader(ObjBlock.class.getClassLoader().getResourceAsStream(path)))) {
             String line;
+            //for each line in the file....
             while((line = reader.readLine()) != null) {
                 String[] tokens = line.split(" ");
 
                 switch (tokens[0]){
                     case "v":
+                        //if the line starts with a 'v' it contains a 3d position
                         positions.add(new Float[]{Float.parseFloat(tokens[1]), Float.parseFloat(tokens[2]),Float.parseFloat(tokens[3])});
                         break;
                     case "vn":
+                        //if the line starts with a 'vn' it contains a 3d normal
                         normals.add(new Float[]{Float.parseFloat(tokens[1]), Float.parseFloat(tokens[2]),Float.parseFloat(tokens[3])});
                         break;
                     case "vt":
+                        //if the line starts with a 'vt' it contains a 2d texture coordinate
                         uvs.add(new Float[]{Float.parseFloat(tokens[1]), Float.parseFloat(tokens[2])});
                         break;
                     case "f":
+                        //if the line starts with a face and a position/texcoord/normal index
                         String[] v1 = tokens[1].split("/");
                         String[] v2 = tokens[2].split("/");
                         String[] v3 = tokens[3].split("/");

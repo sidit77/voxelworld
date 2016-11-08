@@ -10,6 +10,11 @@ import java.util.Map;
 
 public class Font {
 
+    /**
+     * This class can parse a font file and provide information about characters on request.
+     */
+
+
     Map<Integer, Char> chars;
 
     public Font(Map<Integer, Char> chars){
@@ -31,13 +36,18 @@ public class Font {
         try(BufferedReader reader = new BufferedReader(new InputStreamReader(Font.class.getClassLoader().getResourceAsStream(path)))) {
             String line;
             while((line = reader.readLine()) != null) {
+                // if the line starts with 'common' it contains information about the file (texture size, ...)
+                // there should be only a single common-line in the file
                 if(line.startsWith("common"))common = line;
+                // if the line starts with 'char' it contains information about a character (offset, width, ...)
+                // there should be a char-line for every supported character
                 if(line.startsWith("char"))chardefs.add(line);
             }
         } catch (IOException ex) {
             System.out.println("Couldnt read file");
         }
 
+        //read the file size from the common line. If there is not common line the default value of 512 will be used
         int totalwidth = 512;
         int totalheight = 512;
         if(common == null){
@@ -50,6 +60,8 @@ public class Font {
             }
         }
 
+
+        //start building the char lookup table, by parsing every char-line in the list
         Map<Integer, Char> result = new HashMap<>();
 
         for(String chardef : chardefs){
@@ -91,7 +103,7 @@ public class Font {
                     (float)(xadvance+space)));
         }
 
-
+        //return a new Font object with the created lookup table
         return new Font(result);
     }
 

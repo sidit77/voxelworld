@@ -5,6 +5,10 @@ import org.lwjgl.openal.AL10;
 
 public class AudioSource {
 
+    /**
+     * A simple wrapper around an OpenAL source object.
+     */
+
     private int id;
 
     public AudioSource(){

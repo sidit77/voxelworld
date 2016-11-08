@@ -9,6 +9,10 @@ import org.lwjgl.opengl.*;
 
 public class TextRenderer {
 
+    /**
+     * This class can render a Text object to the screen.
+     */
+
     private Texture2D fontTexture;
     private Font font;
     private GLSLProgram fontshader;

@@ -6,6 +6,10 @@ import java.nio.FloatBuffer;
 
 public class Text {
 
+    /**
+     * This class can convert a string to a renderable float buffer based on a Font object
+     */
+
     private FloatBuffer charinfo;
     private float size;
     private int length;

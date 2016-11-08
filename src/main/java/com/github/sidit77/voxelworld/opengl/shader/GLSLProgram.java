@@ -10,6 +10,10 @@ import java.util.HashMap;
 
 public class GLSLProgram {
 
+    /**
+     * A simple wrapper around an OpenGL Program object.
+     */
+
     private int id;
     private HashMap<String, Integer> uniforms;
     private FloatBuffer matrixbuffer;

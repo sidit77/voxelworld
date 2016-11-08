@@ -12,6 +12,10 @@ import java.nio.ByteOrder;
 
 public class Texture2DArray extends Texture{
 
+    /**
+     * A simple wrapper around an OpenGL 2D Array Texture object.
+     */
+
     public Texture2DArray(int width, int height, ByteBuffer[] data) {
         super(GL30.GL_TEXTURE_2D_ARRAY);
 

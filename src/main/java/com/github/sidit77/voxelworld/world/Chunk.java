@@ -37,18 +37,23 @@ public class Chunk extends WorldElement{
 
         ArrayList<Float> vlist = new ArrayList<>();
 
+        //for each block....
         for(int cx = 0; cx < size; cx++){
             for(int cy = 0; cy < size; cy++){
                 for(int cz = 0; cz < size; cz++){
 
                     if(!blocks[cx][cy][cz].isUnrendered()){
+
+                        //let the block generate his mesh or generate it for him
                         if(blocks[cx][cy][cz] instanceof ISpecialRenderer){
                             ((ISpecialRenderer)blocks[cx][cy][cz]).addMeshToList(x + cx, y + cy, z + cz, vlist);
                         }else {
                             for (Direction d : Direction.values()) {
+                                //if the face isn't occluded
                                 if (!getBlock(cx + d.getXOffset(), cy + d.getYOffset(), cz + d.getZOffset()).isSolid(Direction.getOpposite(d))) {
                                     float[][] f = faces[d.getID()];
 
+                                    //generate per vertex light values based on the 4 surrounding per block light values
                                     float[] ao = new float[4];
                                     float[] ll = new float[4];
                                     for(int j = 0; j < 4; j++){
@@ -61,6 +66,7 @@ public class Chunk extends WorldElement{
                                         }
                                     }
 
+                                    //add the face to the list
                                     for (int j : order[ao[1] + ao[3] > ao[0] + ao[2] ? 1 : 0]) {
                                         vlist.add(f[j][0] + x + cx);
                                         vlist.add(f[j][1] + y + cy);
@@ -221,6 +227,7 @@ public class Chunk extends WorldElement{
         Block old = blocks[x][y][z];
         blocks[x][y][z] = b;
 
+        //correct the light without recalculating it
         if(lighting){
             if(old instanceof ILightSource){
                 byte l = lightmap[x][y][z];
@@ -231,11 +238,6 @@ public class Chunk extends WorldElement{
                 byte ol = lightmap[x][y][z];
                 byte nl = ((ILightSource)b).getLightLevel();
                 lightmap[x][y][z] = b.isOpaque() ? nl : (byte)Math.max(nl, ol);
-                //if(nl >= ol){
-                //    lightQueue.add(new LightNode(x,y,z));
-                //}else{
-                //   lightRemoveQueue.add(new LightRemovalNode(x,y,z,ol));
-                //}
                 lightRemoveQueue.add(new LightRemovalNode(x,y,z,ol));
                 lightQueue.add(new LightNode(x,y,z));
             }
@@ -324,6 +326,9 @@ public class Chunk extends WorldElement{
     }
 
     private void updateLight(){
+
+        //apply to changes to the lightmap
+
         while(!lightRemoveQueue.isEmpty()){
             LightRemovalNode node = lightRemoveQueue.remove();
 
@@ -408,6 +413,8 @@ public class Chunk extends WorldElement{
             return val;
         }
     }
+
+    //some lookup tables
 
     private static final int[][] order = {
             {0, 1, 2, 2, 3, 0},
