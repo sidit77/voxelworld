@@ -52,7 +52,7 @@ public class VoxelGameWindow extends GameWindow{
     private int emptyvao;
 
     private int inventorySlot = 0;
-    private Block[] inventory = {Blocks.GRASS, Blocks.STONE, Blocks.WOOL, Blocks.STONEBRICKS, Blocks.BRICKS, Blocks.WOOD, Blocks.LEAF, Blocks.TORCH, Blocks.GLASS, Blocks.COBBLESTONE, Blocks.DIRT, Blocks.LANTERN, Blocks.SAND};
+    private Block[] inventory = {Blocks.GRASS, Blocks.STONE, Blocks.WOOL, Blocks.STONEBRICKS, Blocks.BRICKS, Blocks.WOOD, Blocks.LEAF, Blocks.TORCH, Blocks.GLASS, Blocks.COBBLESTONE, Blocks.DIRT, Blocks.LANTERN, Blocks.SAND, Blocks.STATUE};
 
     private WorldRenderer worldRenderer;
     private Vector3f targetBlock;
@@ -266,10 +266,6 @@ public class VoxelGameWindow extends GameWindow{
         //camera.setPosition(200, 80, 200);
         //camera.setPosition(5, 5, 15);
 
-
-        worldRenderer = new WorldRenderer();
-
-
         emptyvao = GL30.glGenVertexArrays();
 
 
@@ -292,6 +288,8 @@ public class VoxelGameWindow extends GameWindow{
 
         fallingbuffer = AudioBuffer.fromFile("assets/sound/fall.wav");
         fallingsource = new AudioSource().setBuffer(fallingbuffer).setVelocity(0,0,0);
+
+        worldRenderer = new WorldRenderer();
     }
 
     @Override

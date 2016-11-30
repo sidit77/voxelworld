@@ -63,5 +63,6 @@ public class Blocks {
         }
 
     };
+    public static final Block STATUE = new ObjBlock(4, "Glorious Statue", "assets/model/statue.obj");
 
 }

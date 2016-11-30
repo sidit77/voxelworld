@@ -18,7 +18,17 @@ public class ObjBlock extends Block implements ISpecialRenderer {
     }
 
     @Override
-    public void addMeshToList(int x, int y, int z, ArrayList<Float> list) {
+    public boolean isSolid(Direction direction) {
+        return false;
+    }
+
+    @Override
+    public boolean isOpaque() {
+        return false;
+    }
+
+    @Override
+    public void addMeshToList(int x, int y, int z, byte brightness, ArrayList<Float> list) {
         for(int i = 0; i < faces.length; i += 8){
             list.add(x + faces[i + 0]);
             list.add(y + faces[i + 1]);
@@ -31,7 +41,9 @@ public class ObjBlock extends Block implements ISpecialRenderer {
             list.add(faces[i + 6]);
             list.add(faces[i + 7]);
 
-            list.add(1.0f); //TODO CHANGE
+            System.out.println(brightness);
+
+            list.add(((float)brightness) / 16);
             list.add(1.0f);
         }
     }

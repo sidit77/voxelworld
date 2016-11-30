@@ -1,6 +1,5 @@
 package com.github.sidit77.voxelworld.world.blocks;
 
-import com.github.sidit77.voxelworld.world.Direction;
 import com.github.sidit77.voxelworld.world.ILightSource;
 
 public class TorchBlock extends ObjBlock implements ILightSource{
@@ -10,17 +9,7 @@ public class TorchBlock extends ObjBlock implements ILightSource{
     }
 
     @Override
-    public boolean isSolid(Direction direction) {
-        return false;
-    }
-
-    @Override
     public boolean hasHitbox() {
-        return false;
-    }
-
-    @Override
-    public boolean isOpaque() {
         return false;
     }
 

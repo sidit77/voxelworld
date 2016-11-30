@@ -4,6 +4,6 @@ import java.util.ArrayList;
 
 public interface ISpecialRenderer {
 
-    void addMeshToList(int x, int y, int z, ArrayList<Float> list);
+    void addMeshToList(int x, int y, int z, byte brightness, ArrayList<Float> list);
 
 }
