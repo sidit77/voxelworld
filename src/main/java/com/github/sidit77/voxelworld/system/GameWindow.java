@@ -127,7 +127,7 @@ public abstract class GameWindow {
             mouse.update();
             render();
 
-            GLFW.glfwSwapBuffers(windowid);
+            update();
             GLFW.glfwPollEvents();
         }
 
@@ -181,6 +181,10 @@ public abstract class GameWindow {
 
     public String getTitle(){
         return title;
+    }
+
+    public void update(){
+        GLFW.glfwSwapBuffers(windowid);
     }
 
     public void setVsync(boolean vsync){

@@ -9,7 +9,7 @@ import org.lwjgl.opengl.GL30;
 
 import java.nio.FloatBuffer;
 
-public class World {
+public class World{
 
     private WorldElement[][][] chunks;
     private int vao, vbo, vs;
@@ -50,9 +50,9 @@ public class World {
 
         //Initialize the chunks the with default terrain values from the terrain generator
         //for each chunk....
-        for(int x = 1; x < dimX + 1; x++) {
-            for (int y = 1; y < dimY + 1; y++) {
-                for (int z = 1; z < dimZ + 1; z++) {
+        for(int x = 1; x < chunks.length - 1; x++) {
+            for (int y = 1; y < chunks[0].length - 1; y++) {
+                for (int z = 1; z < chunks[0][0].length - 1; z++) {
 
                     //for each block....
                     for(int x2 = 0; x2 < Chunk.size; x2++) {
@@ -71,9 +71,9 @@ public class World {
 
         //Add additional details like trees to the world
         //for each chunk....
-        for(int x = 1; x < dimX + 1; x++) {
-            for (int y = 1; y < dimY + 1; y++) {
-                for (int z = 1; z < dimZ + 1; z++) {
+        for(int x = 1; x < chunks.length - 1; x++) {
+            for (int y = 1; y < chunks[0].length - 1; y++) {
+                for (int z = 1; z < chunks[0][0].length - 1; z++) {
 
                     //for each block....
                     for(int x2 = 0; x2 < Chunk.size; x2++) {
@@ -92,23 +92,22 @@ public class World {
 
         //enable and calculate lighting for the world
         //this has to be called after the world generation to prevent a unnecessary slowdown
-        for(int x = 1; x < dimX + 1; x++) {
-            for (int y = 1; y < dimY + 1; y++) {
-                for (int z = 1; z < dimZ + 1; z++) {
+        for(int x = 1; x < chunks.length - 1; x++) {
+            for (int y = 1; y < chunks[0].length - 1; y++) {
+                for (int z = 1; z < chunks[0][0].length - 1; z++) {
                     chunks[x][y][z].setLighting(true);
                 }
             }
         }
 
         //This is not necessary, but it helps to prevent small lag spikes
-        for(int x = 1; x < dimX + 1; x++) {
-            for (int y = 1; y < dimY + 1; y++) {
-                for (int z = 1; z < dimZ + 1; z++) {
+        for(int x = 1; x < chunks.length - 1; x++) {
+            for (int y = 1; y < chunks[0].length - 1; y++) {
+                for (int z = 1; z < chunks[0][0].length - 1; z++) {
                     chunks[x][y][z].generateMesh(x * Chunk.size, y * Chunk.size, z * Chunk.size);
                 }
             }
         }
-
 
         //OpenGL buffer stuff
         vao = GL30.glGenVertexArrays();

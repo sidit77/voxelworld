@@ -47,7 +47,6 @@ public class Chunk extends WorldElement{
                         //let the block generate his mesh or generate it for him
                         if(blocks[cx][cy][cz] instanceof ISpecialRenderer){
                             ((ISpecialRenderer)blocks[cx][cy][cz]).addMeshToList(x + cx, y + cy, z + cz, getLightLevel(cx, cy, cz), vlist);
-                            System.out.println(getLightLevel(cx, cy, cz));
                         }else {
                             for (Direction d : Direction.values()) {
                                 //if the face isn't occluded

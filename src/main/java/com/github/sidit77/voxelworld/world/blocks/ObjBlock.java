@@ -41,8 +41,6 @@ public class ObjBlock extends Block implements ISpecialRenderer {
             list.add(faces[i + 6]);
             list.add(faces[i + 7]);
 
-            System.out.println(brightness);
-
             list.add(((float)brightness) / 16);
             list.add(1.0f);
         }

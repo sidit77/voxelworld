@@ -41,7 +41,6 @@ public class WorldRenderer {
 
         //create the world
         world = new World(25,7,25, new DefaultWorldGenerator(System.nanoTime()), 6);
-
     }
 
     public void update(Vector3f pos){

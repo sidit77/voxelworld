@@ -39,6 +39,8 @@ public class DefaultWorldGenerator implements IWorldGenerator{
 
                 generateTree(x,y+1,z, world);
 
+            }else if(random.nextFloat() < 0.004f){
+                world.setBlock(x,y+1,z, Blocks.PINEAPPLE);
             }
 
         }

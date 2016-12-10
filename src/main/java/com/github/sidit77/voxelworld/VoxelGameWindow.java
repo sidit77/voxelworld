@@ -52,7 +52,7 @@ public class VoxelGameWindow extends GameWindow{
     private int emptyvao;
 
     private int inventorySlot = 0;
-    private Block[] inventory = {Blocks.GRASS, Blocks.STONE, Blocks.WOOL, Blocks.STONEBRICKS, Blocks.BRICKS, Blocks.WOOD, Blocks.LEAF, Blocks.TORCH, Blocks.GLASS, Blocks.COBBLESTONE, Blocks.DIRT, Blocks.LANTERN, Blocks.SAND, Blocks.STATUE};
+    private Block[] inventory = {Blocks.GRASS, Blocks.STONE, Blocks.WOOL, Blocks.STONEBRICKS, Blocks.BRICKS, Blocks.WOOD, Blocks.LEAF, Blocks.TORCH, Blocks.GLASS, Blocks.COBBLESTONE, Blocks.DIRT, Blocks.LANTERN, Blocks.SAND, Blocks.STATUE, Blocks.PINEAPPLE};
 
     private WorldRenderer worldRenderer;
     private Vector3f targetBlock;
@@ -271,11 +271,6 @@ public class VoxelGameWindow extends GameWindow{
 
         text = new TextRenderer(fonttexture, Font.fromFile("assets/texture/font/ComicSans.fnt", 0, -14), getWidth(), getHeight());
 
-        playerpos = new Vector3f(150, 100, 150);
-        while(worldRenderer.getWorld().getBlock(playerpos) == Blocks.AIR) {
-            playerpos.sub(0, 1, 0);
-        }
-        playerpos.add(0, 2.5f, 0);
 
         blockplacebuffer = AudioBuffer.fromFile("assets/sound/blockplace.wav");
         blockplacesource = new AudioSource().setBuffer(blockplacebuffer).setVolume(250.0f).setVelocity(0,0,0);;
@@ -289,7 +284,16 @@ public class VoxelGameWindow extends GameWindow{
         fallingbuffer = AudioBuffer.fromFile("assets/sound/fall.wav");
         fallingsource = new AudioSource().setBuffer(fallingbuffer).setVelocity(0,0,0);
 
+        GL11.glClearColor(1,1,1,1);
+        GL11.glClear(GL11.GL_COLOR_BUFFER_BIT);
+        update();
+
         worldRenderer = new WorldRenderer();
+        playerpos = new Vector3f(150, 100, 150);
+        while(worldRenderer.getWorld().getBlock(playerpos) == Blocks.AIR) {
+            playerpos.sub(0, 1, 0);
+        }
+        playerpos.add(0, 2.5f, 0);
     }
 
     @Override
@@ -487,7 +491,7 @@ public class VoxelGameWindow extends GameWindow{
                 playermodel.render(playerpos, playerrot, camera.getCameraMatrix(), lightDir, darkness, (float)worldRenderer.getWorld().getLightLevel(playerpos) / 16, lightMatrix, shadowtex);
             }
 
-            if (targetBlock != null) {
+            if (targetBlock != null && !getKeyboard().isKeyDown(Key.F2)) {
                 GL30.glBindVertexArray(emptyvao);
                 GL11.glDepthFunc(GL11.GL_LEQUAL);
                 GL11.glEnable(GL11.GL_BLEND);

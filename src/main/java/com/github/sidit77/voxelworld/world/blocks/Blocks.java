@@ -63,6 +63,7 @@ public class Blocks {
         }
 
     };
-    public static final Block STATUE = new ObjBlock(4, "Glorious Statue", "assets/model/statue.obj");
+    public static final Block STATUE = new ObjBlock(4, "SwordGame Statue (sponsored by Alex)", "assets/model/statue.obj");
+    public static final Block PINEAPPLE = new ObjBlock(9, "Wooden Pineapple", "assets/model/pineapple.obj");
 
 }
