@@ -12,6 +12,10 @@ import java.nio.ByteOrder;
 
 public class CubeMapTexture extends Texture {
 
+    /**
+     * A simple wrapper around an OpenGL Cubemap object.
+     */
+
     public CubeMapTexture(int width, int height, ByteBuffer[] data) {
         super(GL13.GL_TEXTURE_CUBE_MAP);
         GL11.glTexParameteri(GL13.GL_TEXTURE_CUBE_MAP, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_LINEAR_MIPMAP_LINEAR);

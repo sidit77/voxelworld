@@ -7,6 +7,10 @@ import org.lwjgl.opengl.GL14;
 
 public abstract class Texture {
 
+    /**
+     * A simple wrapper around an OpenGL Texture object.
+     */
+
     private int id;
     private int type;
 
@@ -36,6 +40,12 @@ public abstract class Texture {
     public void setLODBias(float v){
         GL11.glBindTexture(type, id);
         GL11.glTexParameterf(GL11.GL_TEXTURE_2D, GL14.GL_TEXTURE_LOD_BIAS, v);
+    }
+
+    public void setFiltering(int min, int mag){
+        GL11.glBindTexture(type, id);
+        GL11.glTexParameteri(type, GL11.GL_TEXTURE_MIN_FILTER, min);
+        GL11.glTexParameteri(type, GL11.GL_TEXTURE_MAG_FILTER, mag);
     }
 
     public void delete(){

@@ -7,7 +7,9 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 
 public class GLSLShader{
-
+    /**
+     * A simple wrapper around an OpenGL Shader object.
+     */
     private final int id;
 
     public GLSLShader(String source, int type){

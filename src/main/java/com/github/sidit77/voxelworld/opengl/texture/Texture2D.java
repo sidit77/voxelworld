@@ -10,6 +10,10 @@ import java.nio.ByteOrder;
 
 public class Texture2D extends Texture{
 
+    /**
+     * A simple wrapper around an OpenGL 2D Texure object.
+     */
+
     public Texture2D(int width, int height, ByteBuffer data) {
         super(GL11.GL_TEXTURE_2D);
         GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_LINEAR_MIPMAP_LINEAR);

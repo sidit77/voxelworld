@@ -9,6 +9,8 @@ import org.lwjgl.system.MemoryUtil;
 
 public abstract class GameWindow {
 
+    //An abstract class to create a window
+
     private static int numberofwindows = 0;
     private static GLFWErrorCallback errorCallback;
 
@@ -57,11 +59,8 @@ public abstract class GameWindow {
     }
 
     public GameWindow(String title, int width, int height, boolean fullscreen, int major, int minor){
-        this.width = width;
-        this.height = height;
-        this.resized = false;
-        this.title = title;
 
+        //Initialize GLFW if it isn't already initialized
         if(numberofwindows <= 0){
             GLFW.glfwSetErrorCallback(errorCallback = GLFWErrorCallback.createPrint(System.err));
             if (GLFW.glfwInit() != GL11.GL_TRUE)
@@ -69,6 +68,7 @@ public abstract class GameWindow {
         }
         numberofwindows++;
 
+        //Set the desired windows hints
         GLFW.glfwDefaultWindowHints();
         GLFW.glfwWindowHint(GLFW.GLFW_VISIBLE, GL11.GL_FALSE);
         GLFW.glfwWindowHint(GLFW.GLFW_RESIZABLE, GL11.GL_TRUE);
@@ -77,18 +77,25 @@ public abstract class GameWindow {
         GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_FORWARD_COMPAT, GL11.GL_TRUE);
         GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_PROFILE, GLFW.GLFW_OPENGL_CORE_PROFILE);
 
-        windowid = GLFW.glfwCreateWindow(width, height, title, fullscreen ? GLFW.glfwGetPrimaryMonitor() : MemoryUtil.NULL, MemoryUtil.NULL);
+        GLFWVidMode vidmode = GLFW.glfwGetVideoMode(GLFW.glfwGetPrimaryMonitor());
+
+        this.width = width < 0 ? vidmode.width() : width;
+        this.height = height < 0 ? vidmode.height() : height;
+        this.resized = false;
+        this.title = title;
+
+        //Create the window
+        windowid = GLFW.glfwCreateWindow(this.width, this.height, title, fullscreen ? GLFW.glfwGetPrimaryMonitor() : MemoryUtil.NULL, MemoryUtil.NULL);
         GLFW.glfwSetFramebufferSizeCallback(windowid, sizeCallback);
         GLFW.glfwSetWindowPosCallback(windowid, posCallback);
         if (windowid == MemoryUtil.NULL)
             throw new RuntimeException("Failed to create the GLFW window");
 
         if(!fullscreen) {
-            GLFWVidMode vidmode = GLFW.glfwGetVideoMode(GLFW.glfwGetPrimaryMonitor());
             GLFW.glfwSetWindowPos(
                     windowid,
-                    (vidmode.width() - width) / 2,
-                    (vidmode.height() - height) / 2
+                    (vidmode.width() - this.width) / 2,
+                    (vidmode.height() - this.height) / 2
             );
         }
         keyboard = new Keyboard(windowid);
@@ -97,11 +104,14 @@ public abstract class GameWindow {
     }
 
     public void run(){
+
+        //Prepare for the main loop
         GLFW.glfwMakeContextCurrent(windowid);
         GLFW.glfwShowWindow(windowid);
         GL.createCapabilities();
-        GLFW.glfwSetTime(0);
         load();
+        GLFW.glfwSetTime(0);
+        //The main loop
         while (GLFW.glfwWindowShouldClose(windowid) == GLFW.GLFW_FALSE) {
             double time = GLFW.glfwGetTime();
             GLFW.glfwSetTime(0);
@@ -117,9 +127,11 @@ public abstract class GameWindow {
             mouse.update();
             render();
 
-            GLFW.glfwSwapBuffers(windowid);
+            update();
             GLFW.glfwPollEvents();
         }
+
+        //Clean everything up
         destroy();
 
         sizeCallback.release();
@@ -130,6 +142,7 @@ public abstract class GameWindow {
 
         GLFW.glfwDestroyWindow(windowid);
 
+        //Close GLFW if needed
         numberofwindows--;
         if(numberofwindows <= 0){
             GLFW.glfwTerminate();
@@ -168,6 +181,10 @@ public abstract class GameWindow {
 
     public String getTitle(){
         return title;
+    }
+
+    public void update(){
+        GLFW.glfwSwapBuffers(windowid);
     }
 
     public void setVsync(boolean vsync){
