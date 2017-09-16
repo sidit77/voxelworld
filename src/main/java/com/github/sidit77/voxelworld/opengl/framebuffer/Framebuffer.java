@@ -8,7 +8,7 @@ public class FrameBuffer {
 
     /**
      * A simple wrapper around an OpenGL Framebuffer object.
-     */
+     */ 
 
     public int id;
 
