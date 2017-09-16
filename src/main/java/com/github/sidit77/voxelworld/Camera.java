@@ -4,6 +4,8 @@ import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
+//A class that represents a Camera and is capable a creating a various transform matrices based on this camera
+
 public class Camera {
 
     private static final Vector3f up = new Vector3f(0,1,0);
@@ -39,8 +41,8 @@ public class Camera {
 
     public Matrix4f getViewMatrix(){
         camera.identity();
+        camera.perspective((float)Math.toRadians(fov), aspect, 0.01f, 100000.0f);
         camera.rotate(rotation);
-        camera.translate(new Vector3f(position).negate());
         return camera;
     }
 

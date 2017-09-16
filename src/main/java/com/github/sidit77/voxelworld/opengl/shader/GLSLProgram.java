@@ -1,16 +1,18 @@
 package com.github.sidit77.voxelworld.opengl.shader;
 
-import org.joml.Matrix4f;
-import org.joml.Vector2f;
-import org.joml.Vector3f;
-import org.joml.Vector4f;
+import org.joml.*;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL20;
+import org.lwjgl.opengl.GL31;
 
 import java.nio.FloatBuffer;
 import java.util.HashMap;
 
 public class GLSLProgram {
+
+    /**
+     * A simple wrapper around an OpenGL Program object.
+     */
 
     private int id;
     private HashMap<String, Integer> uniforms;
@@ -75,6 +77,21 @@ public class GLSLProgram {
             uniforms.put(name, GL20.glGetUniformLocation(id, name));
         }
         return uniforms.get(name);
+    }
+
+    public int getUniformBlock(String name){
+        if(!uniforms.containsKey("ub_" + name)) {
+            uniforms.put("ub_" + name, GL31.glGetUniformBlockIndex(id, name));
+        }
+        return uniforms.get("ub_" + name);
+    }
+
+    public void bindUniformBlock(String name, int slot){
+        GL31.glUniformBlockBinding(id, getUniformBlock(name), slot);
+    }
+
+    public void bindUniformBlock(int location, int slot){
+        GL31.glUniformBlockBinding(id, location, slot);
     }
 
     public void setUniform(int location, int value) {
@@ -176,5 +193,14 @@ public class GLSLProgram {
     }
 
 
+    public void setUniform(String name, boolean transpose, Matrix3f matrix) {
+        setUniform(getUniform(name), transpose, matrix);
+    }
+
+    private void setUniform(int uniform, boolean transpose, Matrix3f matrix) {
+        matrix.get(matrixbuffer);
+        GL20.glUniformMatrix3fv(uniform, transpose, matrixbuffer);
+        matrixbuffer.rewind();
+    }
 }
 
